@@ -162,13 +162,6 @@
             --sat: env(safe-area-inset-top, 0px);
         }
 
-        html {
-            background-color: #F1F5F9;
-        }
-        html.dark {
-            background-color: #080C14;
-        }
-
         body {
             background-color: #F1F5F9;
             background-image: 
@@ -199,18 +192,10 @@
             top: 0;
             left: 0;
             right: 0;
-            height: max(env(safe-area-inset-top, 0px), 20px);
+            height: env(safe-area-inset-top, 0px);
             z-index: 45;
             pointer-events: none;
             transition: background-color 0.3s ease;
-        }
-
-        /* Hardware isolated header layer preventing iOS WebKit progressive blur */
-        .isolated-header-layer {
-            -webkit-transform: translateZ(0);
-            transform: translateZ(0);
-            isolation: isolate;
-            will-change: transform;
         }
 
         .custom-scrollbar::-webkit-scrollbar {
@@ -328,7 +313,7 @@
             <div id="loading-retry-container" class="hidden pt-4">
                 <button onclick="retryFetchData()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/30 transition-all flex items-center space-x-2 mx-auto active:scale-95">
                     <i class="fa-solid fa-rotate-right text-xs"></i>
-                    <span>ลองเชื่อมต่อใหม่อีกครั้ง</span>
+                    <span>ลองใหม่อีกครั้ง</span>
                 </button>
             </div>
         </div>
@@ -337,14 +322,14 @@
     <main id="app-container" class="w-full max-w-md bg-white dark:bg-[#0D121F] min-h-screen sm:min-h-0 sm:rounded-[36px] shadow-xl dark:shadow-fintech-card overflow-hidden flex flex-col justify-between border-0 sm:border border-slate-200/80 dark:border-fintech-border relative transition-colors duration-400">
 
         <!-- Top Header & Hero Balance Container (Crisp, perfectly padded for iOS Safe Area) -->
-        <header class="p-4 sm:p-5 pb-4 relative z-10 bg-white dark:bg-[#0D121F] transition-colors duration-400 isolated-header-layer" style="padding-top: max(1.25rem, calc(env(safe-area-inset-top, 0px) + 0.75rem));">
+        <header class="p-4 sm:p-5 pb-4 relative z-10 bg-white dark:bg-[#0D121F] transition-colors duration-400" style="padding-top: max(0.75rem, calc(env(safe-area-inset-top, 0px) + 0.5rem));">
 
             <!-- Navbar Row -->
             <div class="flex justify-between items-center mb-4 sm:mb-5">
                 <!-- Brand Badge -->
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-0.5 shadow-lg shadow-blue-600/30 flex items-center justify-center">
-                        <div class="w-full h-full bg-white dark:bg-[#0F1523] rounded-[14px] flex items-center justify-center shadow-inner">
+                        <div class="w-full h-full bg-white/90 dark:bg-[#0F1523]/80 rounded-[14px] flex items-center justify-center backdrop-blur-sm">
                             <i class="fa-solid fa-chart-pie text-blue-600 dark:text-blue-400 text-base"></i>
                         </div>
                     </div>
@@ -420,7 +405,7 @@
 
                 <div class="flex items-center space-x-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
-                    <span>ยอดสะสมล่าสุดจากระบบ กบข.</span>
+                    <span>รวมเงินต้นและผลประโยชน์</span>
                 </div>
             </div>
 
@@ -500,7 +485,7 @@
 
                 <!-- Table Header Column Labels -->
                 <div class="flex justify-between items-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 py-2 border-b border-slate-200 dark:border-white/10 px-2 bg-slate-200/60 dark:bg-slate-900/40 rounded-xl mb-1">
-                    <span class="w-[45%] text-left">รายการ</span>
+                    <span class="w-[45%] text-left">รายละเอียด</span>
                     <span class="w-[28%] text-right">ผลตอบแทน</span>
                     <span class="w-[27%] text-right">% ผลตอบแทน</span>
                 </div>
@@ -530,7 +515,7 @@
                         </div>
                         <div>
                             <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-wide">รายละเอียดผลตอบแทน</h3>
-                            <p class="text-[10px] text-slate-500 dark:text-slate-400">ข้อมูลย้อนหลังจากระบบ กบข.</p>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">ข้อมูลย้อนหลังจาก กบข.</p>
                         </div>
                     </div>
                     <button onclick="closeDetailsModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors">
@@ -543,7 +528,7 @@
                             <tr class="text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
                                 <th class="py-2.5 px-2 font-semibold text-center w-[30%]">วันที่</th>
                                 <th class="py-2.5 px-2 font-semibold text-right w-[35%]">มูลค่าพอร์ตรวม</th>
-                                <th class="py-2.5 px-2 font-semibold text-right w-[35%]">ผลตอบแทน</th>
+                                <th class="py-2.5 px-2 font-semibold text-right w-[35%]">ผลตอบแทน (%)</th>
                             </tr>
                         </thead>
                         <tbody id="details-table-body" class="divide-y divide-slate-100 dark:divide-white/5 text-xs">
@@ -1014,7 +999,7 @@
                 const parsed = parseCSVData(csvText);
 
                 if (!parsed || parsed.length === 0) {
-                    throw new Error("โครงสร้างข้อมูลในตารางว่างเปล่าหรือไม่ถูกต้อง");
+                    throw new Error("ข้อมูลไม่ถูกต้อง");
                 }
 
                 rawData = parsed;
@@ -1765,7 +1750,7 @@
                 values = chartRecords.map(r => r.total);
 
                 // ปรับขนาดฟอนต์ให้แสดงครบทั้ง 12 เดือนอย่างสวยงาม ไม่ทับซ้อนกันบนจอมือถือ
-                chartInstance.options.scales.x.ticks.font = { size: 8.5, family: 'Prompt', weight: '500' };
+                chartInstance.options.scales.x.ticks.font = { size: 9.5, family: 'Prompt', weight: '500' };
                 chartInstance.options.scales.x.ticks.maxRotation = 0;
                 chartInstance.options.scales.x.ticks.minRotation = 0;
                 chartInstance.data.datasets[0].pointRadius = 3;
