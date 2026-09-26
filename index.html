@@ -1706,6 +1706,9 @@
                 values = last7.map(d => d.total);
                 chartRecords = last7;
 
+                chartInstance.options.scales.x.ticks.callback = function(val) {
+                    return this.getLabelForValue(val);
+                };
                 chartInstance.options.scales.x.ticks.font = { size: 9.5, family: 'Prompt', weight: '500' };
                 chartInstance.options.scales.x.ticks.maxRotation = 0;
                 chartInstance.options.scales.x.ticks.minRotation = 0;
@@ -1750,6 +1753,9 @@
                 values = chartRecords.map(r => r.total);
 
                 // ปรับขนาดฟอนต์ให้แสดงครบทั้ง 12 เดือนอย่างสวยงาม ไม่ทับซ้อนกันบนจอมือถือ
+                chartInstance.options.scales.x.ticks.callback = function(val) {
+                    return this.getLabelForValue(val);
+                };
                 chartInstance.options.scales.x.ticks.font = { size: 9.5, family: 'Prompt', weight: '500' };
                 chartInstance.options.scales.x.ticks.maxRotation = 0;
                 chartInstance.options.scales.x.ticks.minRotation = 0;
@@ -1789,12 +1795,50 @@
                 });
                 values = chartRecords.map(r => r.total);
 
-                // แสดงปีครบทุกจุดอย่างชัดเจน
-                chartInstance.options.scales.x.ticks.font = { size: 9, family: 'Prompt', weight: '500' };
-                chartInstance.options.scales.x.ticks.maxRotation = 0;
-                chartInstance.options.scales.x.ticks.minRotation = 0;
-                chartInstance.data.datasets[0].pointRadius = 3.5;
-                chartInstance.data.datasets[0].pointHoverRadius = 5.5;
+                if (range === 'all') {
+                    // ปรับแต่งเฉพาะมุมมอง "ข้อมูลทั้งหมด": บังคับแสดงจุดเริ่มต้น (Index 0) และจุดสุดท้าย (Index N-1)
+                    // ส่วนจุดตรงกลางจะคำนวณเว้นระยะข้ามจุดอย่างสมดุล (รวม 3-5 จุด) ให้กราฟดูโปร่ง สะอาดตา ไม่แออัด
+                    let targetCount = 3;
+                    if (labels.length <= 4) {
+                        targetCount = labels.length;
+                    } else if (labels.length <= 6) {
+                        targetCount = 3;
+                    } else if (labels.length <= 8) {
+                        targetCount = 4;
+                    } else {
+                        targetCount = 5;
+                    }
+
+                    const visibleIndices = new Set();
+                    visibleIndices.add(0);
+                    if (labels.length > 1) {
+                        visibleIndices.add(labels.length - 1);
+                    }
+                    for (let i = 1; i < targetCount - 1; i++) {
+                        const idx = Math.round((i * (labels.length - 1)) / (targetCount - 1));
+                        visibleIndices.add(idx);
+                    }
+
+                    chartInstance.options.scales.x.ticks.callback = function(val, index) {
+                        const tickIdx = typeof index === 'number' ? index : val;
+                        return visibleIndices.has(tickIdx) ? this.getLabelForValue(val) : '';
+                    };
+                    chartInstance.options.scales.x.ticks.font = { size: 9.5, family: 'Prompt', weight: '500' };
+                    chartInstance.options.scales.x.ticks.maxRotation = 0;
+                    chartInstance.options.scales.x.ticks.minRotation = 0;
+                    chartInstance.data.datasets[0].pointRadius = labels.length > 15 ? 2.5 : 3.5;
+                    chartInstance.data.datasets[0].pointHoverRadius = 5.5;
+                } else {
+                    // มุมมองรายปี (yearly): แสดงปีครบทุกจุดตามปกติ
+                    chartInstance.options.scales.x.ticks.callback = function(val) {
+                        return this.getLabelForValue(val);
+                    };
+                    chartInstance.options.scales.x.ticks.font = { size: 9.5, family: 'Prompt', weight: '500' };
+                    chartInstance.options.scales.x.ticks.maxRotation = 0;
+                    chartInstance.options.scales.x.ticks.minRotation = 0;
+                    chartInstance.data.datasets[0].pointRadius = 3.5;
+                    chartInstance.data.datasets[0].pointHoverRadius = 5.5;
+                }
             }
 
             chartInstance.data.labels = labels;
