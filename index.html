@@ -2,11 +2,11 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="color-scheme" content="light dark">
     <title>My GPF</title>
 
-    <!-- Immediate Theme Initialization Script (Prevents Theme Flash) -->
+    <!-- Immediate Theme Initialization Script (Prevents Theme Flash & Sets Status Bar Theme) -->
     <script>
         (function() {
             try {
@@ -42,7 +42,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="My GPF">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0B0F17">
+    
+    <!-- Dynamic Theme Color matching light/dark modes (Removes iOS status bar blur overlay) -->
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0D121F" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#FFFFFF" id="meta-theme-color">
 
     <!-- Preconnect for Data Sources & Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -182,6 +186,18 @@
             color: #F8FAFC;
         }
 
+        /* Eliminates iOS Standalone blur artifact under notch */
+        .ios-status-fill {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: env(safe-area-inset-top, 0px);
+            z-index: 45;
+            pointer-events: none;
+            transition: background-color 0.3s ease;
+        }
+
         .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
             height: 4px;
@@ -263,6 +279,9 @@
 </head>
 <body class="flex justify-center items-start min-h-screen p-0 sm:py-6 sm:px-4 text-slate-800 dark:text-slate-100 relative selection:bg-blue-600/30">
 
+    <!-- Solid status bar background prevents iOS WebKit from rendering a blurry UIVisualEffectView overlay -->
+    <div id="ios-status-bar-fill" class="ios-status-fill bg-white dark:bg-[#0D121F]"></div>
+
     <!-- WELCOME LOADING SCREEN -->
     <div id="loading-screen" class="fixed inset-0 bg-slate-50 dark:bg-[#080C14] z-[9999] flex flex-col items-center justify-center transition-all duration-700 ease-in-out p-6">
         <div class="relative flex flex-col items-center max-w-xs w-full text-center">
@@ -300,10 +319,10 @@
         </div>
     </div>
 
-    <main id="app-container" class="w-full max-w-md bg-white dark:bg-[#0D121F] min-h-screen sm:min-h-0 sm:rounded-[36px] shadow-xl dark:shadow-fintech-card overflow-hidden flex flex-col justify-between border-0 sm:border border-slate-200/80 dark:border-fintech-border relative backdrop-blur-xl transition-colors duration-400">
+    <main id="app-container" class="w-full max-w-md bg-white dark:bg-[#0D121F] min-h-screen sm:min-h-0 sm:rounded-[36px] shadow-xl dark:shadow-fintech-card overflow-hidden flex flex-col justify-between border-0 sm:border border-slate-200/80 dark:border-fintech-border relative transition-colors duration-400">
 
-        <!-- Top Header & Hero Balance Container -->
-        <header class="p-4 sm:p-5 pb-4 relative z-10" style="padding-top: max(1rem, calc(env(safe-area-inset-top, 0px) + 0.5rem));">
+        <!-- Top Header & Hero Balance Container (Crisp, perfectly padded for iOS Safe Area) -->
+        <header class="p-4 sm:p-5 pb-4 relative z-10 bg-white dark:bg-[#0D121F] transition-colors duration-400" style="padding-top: max(0.75rem, calc(env(safe-area-inset-top, 0px) + 0.5rem));">
 
             <!-- Navbar Row -->
             <div class="flex justify-between items-center mb-4 sm:mb-5">
@@ -643,30 +662,6 @@
     <script>
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTv1M6gCEH9fHNI2FNAjv9W5onhaOufKJTOkdeDBFQsDU5_EB1v6y4abGtWTmHAwW0N4AmRFDG159ew/pub?gid=1837893473&single=true&output=csv";
 
-        // Comprehensive Fallback Dataset: Guarantees instantaneous preview load even if offline or sandboxed
-        const FALLBACK_RECORDS = [
-            { dateStr: "31 ส.ค. 2568", principal: 560000.00, returnAccum: 185420.30, total: 745420.30, diff: 940.50, profit: 940.50, returnPct: 0.13, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "30 ก.ย. 2568", principal: 568000.00, returnAccum: 194120.45, total: 762120.45, diff: 1250.20, profit: 1250.20, returnPct: 0.16, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "31 ต.ค. 2568", principal: 576000.00, returnAccum: 201340.80, total: 777340.80, diff: 1100.40, profit: 1100.40, returnPct: 0.14, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "30 พ.ย. 2568", principal: 584000.00, returnAccum: 209850.25, total: 793850.25, diff: 1420.80, profit: 1420.80, returnPct: 0.18, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "31 ธ.ค. 2568", principal: 592000.00, returnAccum: 218700.60, total: 810700.60, diff: 1350.60, profit: 1350.60, returnPct: 0.17, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "31 ม.ค. 2569", principal: 600000.00, returnAccum: 226400.10, total: 826400.10, diff: 1180.50, profit: 1180.50, returnPct: 0.14, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "28 ก.พ. 2569", principal: 608000.00, returnAccum: 232900.50, total: 840900.50, diff: -540.20, profit: -540.20, returnPct: -0.06, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "31 มี.ค. 2569", principal: 616000.00, returnAccum: 240150.70, total: 856150.70, diff: 1250.80, profit: 1250.80, returnPct: 0.15, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "30 เม.ย. 2569", principal: 624000.00, returnAccum: 247890.30, total: 871890.30, diff: 1420.30, profit: 1420.30, returnPct: 0.16, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "31 พ.ค. 2569", principal: 632000.00, returnAccum: 253400.90, total: 885400.90, diff: 890.40, profit: 890.40, returnPct: 0.10, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "30 มิ.ย. 2569", principal: 640000.00, returnAccum: 259600.40, total: 899600.40, diff: 1540.60, profit: 1540.60, returnPct: 0.17, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "31 ก.ค. 2569", principal: 648000.00, returnAccum: 265800.70, total: 913800.70, diff: 1320.20, profit: 1320.20, returnPct: 0.14, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "31 ส.ค. 2569", principal: 656000.00, returnAccum: 271500.50, total: 927500.50, diff: 1150.70, profit: 1150.70, returnPct: 0.12, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "20 ก.ย. 2569", principal: 656000.00, returnAccum: 273240.20, total: 929240.20, diff: 480.30, profit: 480.30, returnPct: 0.05, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "21 ก.ย. 2569", principal: 656000.00, returnAccum: 272890.50, total: 928890.50, diff: -349.70, profit: -349.70, returnPct: -0.04, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "22 ก.ย. 2569", principal: 656000.00, returnAccum: 273920.80, total: 929920.80, diff: 1030.30, profit: 1030.30, returnPct: 0.11, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "23 ก.ย. 2569", principal: 656000.00, returnAccum: 274680.10, total: 930680.10, diff: 759.30, profit: 759.30, returnPct: 0.08, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "24 ก.ย. 2569", principal: 656000.00, returnAccum: 274310.40, total: 930310.40, diff: -369.70, profit: -369.70, returnPct: -0.04, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "25 ก.ย. 2569", principal: 656000.00, returnAccum: 275840.60, total: 931840.60, diff: 1530.20, profit: 1530.20, returnPct: 0.16, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" },
-            { dateStr: "26 ก.ย. 2569", principal: 656000.00, returnAccum: 277680.85, total: 933680.85, diff: 1840.25, profit: 1840.25, returnPct: 0.20, plan: "แผนการลงทุนตามหลักชะรีอะฮ์" }
-        ].map((item, idx) => ({ ...item, rawIndex: idx }));
-
         let rawData = [];
         let selectedIndex = 0;
         let chartInstance = null;
@@ -684,13 +679,11 @@
         const THAI_FULL_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
         const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-        let immediateFetchPromise = null;
 
         window.onload = async function() {
             initThemeSystem();
             loadSavedAvatar();
             initChart();
-            immediateFetchPromise = fetchSheetCSV();
             await handleInitialDataLoad();
         };
 
@@ -815,6 +808,25 @@
                 document.documentElement.classList.add('dark');
             } else {
                 document.documentElement.classList.remove('dark');
+            }
+
+            // Sync dynamic theme-color meta tag to eliminate iOS status bar blur
+            const themeColorHex = isDark ? '#0D121F' : '#FFFFFF';
+            const metaTheme = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
+            if (metaTheme) {
+                metaTheme.setAttribute('content', themeColorHex);
+            }
+
+            // Sync solid status bar anchor color
+            const statusBarFill = document.getElementById('ios-status-bar-fill');
+            if (statusBarFill) {
+                if (isDark) {
+                    statusBarFill.classList.remove('bg-white');
+                    statusBarFill.classList.add('bg-[#0D121F]');
+                } else {
+                    statusBarFill.classList.remove('bg-[#0D121F]');
+                    statusBarFill.classList.add('bg-white');
+                }
             }
 
             updateThemeButtonUI(displayMode, isDark);
@@ -973,27 +985,21 @@
         }
 
         async function handleInitialDataLoad() {
-            setLoadingStatus("กำลังโหลดข้อมูลพอร์ตของคุณ...", 35);
+            setLoadingStatus("กำลังโหลดข้อมูลพอร์ตของคุณ...", 25);
 
             try {
-                await sleep(300);
-                setLoadingStatus("กำลังโหลดข้อมูลพอร์ตของคุณ...", 65);
+                setLoadingStatus("กำลังโหลดข้อมูลพอร์ตของคุณ...", 50);
+                const csvText = await fetchSheetCSV();
 
-                let parsed = null;
-                try {
-                    const csvText = await Promise.race([
-                        immediateFetchPromise,
-                        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2200))
-                    ]);
-                    if (csvText) {
-                        parsed = parseCSVData(csvText);
-                    }
-                } catch (netErr) {
-                    console.info("Using embedded offline cache data (network sandboxed/offline):", netErr.message);
+                if (!csvText || typeof csvText !== 'string' || csvText.trim() === '') {
+                    throw new Error("ลองใหม่อีกครั้ง");
                 }
 
+                setLoadingStatus("กำลังโหลดข้อมูลพอร์ตของคุณ...", 75);
+                const parsed = parseCSVData(csvText);
+
                 if (!parsed || parsed.length === 0) {
-                    parsed = FALLBACK_RECORDS;
+                    throw new Error("โครงสร้างข้อมูลในตารางว่างเปล่าหรือไม่ถูกต้อง");
                 }
 
                 rawData = parsed;
@@ -1005,29 +1011,57 @@
                 await sleep(400);
                 hideLoadingScreen();
             } catch (err) {
-                console.error("Critical loader fallback:", err);
-                rawData = FALLBACK_RECORDS;
-                selectedIndex = rawData.length - 1;
-                updateDashboard();
-                hideLoadingScreen();
+                console.error("Critical Google Sheets fetch error:", err);
+                showLoadingError("ลองใหม่อีกครั้ง");
             }
         }
 
         async function fetchSheetCSV() {
+            // ป้องกันแคชค้างด้วย timestamp param เพื่อให้ได้ข้อมูลจริงล่าสุดเสมอ
+            const cacheBuster = `&_cb=${Date.now()}`;
+            const targetUrl = CSV_URL + cacheBuster;
+
+            // 1. ลองเชื่อมต่อ Google Sheets โดยตรง (มี CORS header ในตัว)
             try {
-                const res = await fetchWithTimeout(CSV_URL, { cache: "no-cache" }, 3000);
-                if (res && res.ok) return await res.text();
+                const res = await fetchWithTimeout(targetUrl, { cache: "no-store" }, 8000);
+                if (res && res.ok) {
+                    const text = await res.text();
+                    if (text && text.trim().length > 0 && text.includes(',')) {
+                        return text;
+                    }
+                }
             } catch (e) {
-                console.warn("Direct fetch unavailable, attempting proxy...");
+                console.warn("Direct Google Sheets fetch unavailable, trying backup proxy...");
             }
 
+            // 2. สำรองช่องทางที่ 1: AllOrigins CORS Proxy
             try {
-                const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(CSV_URL);
-                const proxyRes = await fetchWithTimeout(proxyUrl, { cache: "no-cache" }, 3500);
-                if (proxyRes && proxyRes.ok) return await proxyRes.text();
+                const proxyUrl1 = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+                const res1 = await fetchWithTimeout(proxyUrl1, { cache: "no-store" }, 8000);
+                if (res1 && res1.ok) {
+                    const text1 = await res1.text();
+                    if (text1 && text1.trim().length > 0 && text1.includes(',')) {
+                        return text1;
+                    }
+                }
             } catch (e) {
-                console.warn("Proxy attempt unreachable.");
+                console.warn("Backup proxy 1 failed, trying proxy 2...");
             }
+
+            // 3. สำรองช่องทางที่ 2: corsproxy.io
+            try {
+                const proxyUrl2 = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+                const res2 = await fetchWithTimeout(proxyUrl2, { cache: "no-store" }, 8000);
+                if (res2 && res2.ok) {
+                    const text2 = await res2.text();
+                    if (text2 && text2.trim().length > 0 && text2.includes(',')) {
+                        return text2;
+                    }
+                }
+            } catch (e) {
+                console.warn("Backup proxy 2 failed.");
+            }
+
             return null;
         }
 
@@ -1036,6 +1070,22 @@
             if (statusEl) statusEl.innerText = text;
             const bar = document.getElementById('loading-progress-bar');
             if (bar) bar.style.width = pct + '%';
+        }
+
+        function showLoadingError(msg) {
+            const statusEl = document.getElementById('loading-status-text');
+            if (statusEl) {
+                statusEl.innerText = msg;
+                statusEl.classList.add('text-rose-500', 'dark:text-rose-400');
+            }
+            const bar = document.getElementById('loading-progress-bar');
+            if (bar) {
+                bar.classList.remove('from-blue-500', 'via-teal-400', 'to-emerald-400');
+                bar.classList.add('bg-rose-500');
+                bar.style.width = '100%';
+            }
+            const retryBox = document.getElementById('loading-retry-container');
+            if (retryBox) retryBox.classList.remove('hidden');
         }
 
         function hideLoadingScreen() {
@@ -1050,8 +1100,17 @@
         async function retryFetchData() {
             const retryBox = document.getElementById('loading-retry-container');
             if (retryBox) retryBox.classList.add('hidden');
-            setLoadingStatus("กำลังเชื่อมต่ออีกครั้ง...", 30);
-            immediateFetchPromise = fetchSheetCSV();
+            
+            const statusEl = document.getElementById('loading-status-text');
+            if (statusEl) {
+                statusEl.classList.remove('text-rose-500', 'dark:text-rose-400');
+            }
+
+            const bar = document.getElementById('loading-progress-bar');
+            if (bar) {
+                bar.className = "bg-gradient-to-r from-blue-500 via-teal-400 to-emerald-400 h-full rounded-full transition-all duration-500 ease-out w-[15%] shadow-neon-blue";
+            }
+
             await handleInitialDataLoad();
         }
 
@@ -1425,8 +1484,10 @@
                             grid: { display: false },
                             ticks: {
                                 color: isDark ? '#94A3B8' : '#64748B',
-                                font: { size: 10, family: 'Prompt' },
-                                maxTicksLimit: 7
+                                font: { size: 9.5, family: 'Prompt' },
+                                autoSkip: false,
+                                maxRotation: 0,
+                                minRotation: 0
                             }
                         },
                         y: {
@@ -1622,6 +1683,10 @@
             chartInstance.data.datasets[0].pointBorderColor = isDark ? '#0F1523' : '#FFFFFF';
             chartInstance.options.scales.x.ticks.color = isDark ? '#94A3B8' : '#64748B';
 
+            // บังคับให้แกนนอนแสดงข้อความครบทุกจุดโดยไม่มีการตัดข้าม (AutoSkip: false)
+            chartInstance.options.scales.x.ticks.autoSkip = false;
+            delete chartInstance.options.scales.x.ticks.maxTicksLimit;
+
             const range = document.getElementById('chart-range-select').value;
             const recordsUpToSelected = rawData.slice(0, selectedIndex + 1);
             const currentSelectedRec = rawData[selectedIndex];
@@ -1640,6 +1705,12 @@
                 });
                 values = last7.map(d => d.total);
                 chartRecords = last7;
+
+                chartInstance.options.scales.x.ticks.font = { size: 9.5, family: 'Prompt', weight: '500' };
+                chartInstance.options.scales.x.ticks.maxRotation = 0;
+                chartInstance.options.scales.x.ticks.minRotation = 0;
+                chartInstance.data.datasets[0].pointRadius = 4;
+                chartInstance.data.datasets[0].pointHoverRadius = 6;
             } 
             else if (range === 'monthly') {
                 const monthMap = new Map();
@@ -1677,6 +1748,13 @@
                     };
                 });
                 values = chartRecords.map(r => r.total);
+
+                // ปรับขนาดฟอนต์ให้แสดงครบทั้ง 12 เดือนอย่างสวยงาม ไม่ทับซ้อนกันบนจอมือถือ
+                chartInstance.options.scales.x.ticks.font = { size: 8.5, family: 'Prompt', weight: '500' };
+                chartInstance.options.scales.x.ticks.maxRotation = 0;
+                chartInstance.options.scales.x.ticks.minRotation = 0;
+                chartInstance.data.datasets[0].pointRadius = 3;
+                chartInstance.data.datasets[0].pointHoverRadius = 5;
             } 
             else if (range === 'yearly' || range === 'all') {
                 const minYear = (range === 'yearly') ? (currentYear - 9) : 0;
@@ -1710,6 +1788,13 @@
                     };
                 });
                 values = chartRecords.map(r => r.total);
+
+                // แสดงปีครบทุกจุดอย่างชัดเจน
+                chartInstance.options.scales.x.ticks.font = { size: 9, family: 'Prompt', weight: '500' };
+                chartInstance.options.scales.x.ticks.maxRotation = 0;
+                chartInstance.options.scales.x.ticks.minRotation = 0;
+                chartInstance.data.datasets[0].pointRadius = 3.5;
+                chartInstance.data.datasets[0].pointHoverRadius = 5.5;
             }
 
             chartInstance.data.labels = labels;
