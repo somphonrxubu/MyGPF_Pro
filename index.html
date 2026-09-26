@@ -162,6 +162,13 @@
             --sat: env(safe-area-inset-top, 0px);
         }
 
+        html {
+            background-color: #F1F5F9;
+        }
+        html.dark {
+            background-color: #080C14;
+        }
+
         body {
             background-color: #F1F5F9;
             background-image: 
@@ -192,10 +199,18 @@
             top: 0;
             left: 0;
             right: 0;
-            height: env(safe-area-inset-top, 0px);
+            height: max(env(safe-area-inset-top, 0px), 20px);
             z-index: 45;
             pointer-events: none;
             transition: background-color 0.3s ease;
+        }
+
+        /* Hardware isolated header layer preventing iOS WebKit progressive blur */
+        .isolated-header-layer {
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            isolation: isolate;
+            will-change: transform;
         }
 
         .custom-scrollbar::-webkit-scrollbar {
@@ -322,14 +337,14 @@
     <main id="app-container" class="w-full max-w-md bg-white dark:bg-[#0D121F] min-h-screen sm:min-h-0 sm:rounded-[36px] shadow-xl dark:shadow-fintech-card overflow-hidden flex flex-col justify-between border-0 sm:border border-slate-200/80 dark:border-fintech-border relative transition-colors duration-400">
 
         <!-- Top Header & Hero Balance Container (Crisp, perfectly padded for iOS Safe Area) -->
-        <header class="p-4 sm:p-5 pb-4 relative z-10 bg-white dark:bg-[#0D121F] transition-colors duration-400" style="padding-top: max(0.75rem, calc(env(safe-area-inset-top, 0px) + 0.5rem));">
+        <header class="p-4 sm:p-5 pb-4 relative z-10 bg-white dark:bg-[#0D121F] transition-colors duration-400 isolated-header-layer" style="padding-top: max(1.25rem, calc(env(safe-area-inset-top, 0px) + 0.75rem));">
 
             <!-- Navbar Row -->
             <div class="flex justify-between items-center mb-4 sm:mb-5">
                 <!-- Brand Badge -->
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-0.5 shadow-lg shadow-blue-600/30 flex items-center justify-center">
-                        <div class="w-full h-full bg-white/90 dark:bg-[#0F1523]/80 rounded-[14px] flex items-center justify-center backdrop-blur-sm">
+                        <div class="w-full h-full bg-white dark:bg-[#0F1523] rounded-[14px] flex items-center justify-center shadow-inner">
                             <i class="fa-solid fa-chart-pie text-blue-600 dark:text-blue-400 text-base"></i>
                         </div>
                     </div>
