@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <title>My GPF</title>
+
+    <!-- Immediate Theme Initialization Script (Prevents White/Dark Flash) -->
+    <script>
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('gpf_theme_pref') || 'auto';
+                let isDark = false;
+                if (savedTheme === 'dark') {
+                    isDark = true;
+                } else if (savedTheme === 'light') {
+                    isDark = false;
+                } else {
+                    // Auto mode: Day (06:00 - 18:00) / Night (18:00 - 06:00)
+                    const hour = new Date().getHours();
+                    isDark = (hour < 6 || hour >= 18);
+                }
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+
+    <!-- iOS & Web App Manifest / Icons -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/somphonrxubu/MyGPF_Dashboard/refs/heads/main/MyGPF_icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/somphonrxubu/MyGPF_Dashboard/refs/heads/main/MyGPF_icon.png">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/somphonrxubu/MyGPF_Dashboard/refs/heads/main/MyGPF_icon.png">
+    
+    <!-- iOS Home Screen Settings -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="My GPF">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0B0F17">
+
+    <!-- Preconnect for Data Sources & Google Fonts -->
+    <link rel="preconnect" href="https://docs.google.com" crossorigin>
+    <link rel="dns-prefetch" href="https://docs.google.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- OneSignal Web Push SDK (v16) -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        let oneSignalInitFailed = false;
+        let oneSignalErrorMsg = '';
+        let oneSignalInstance = null;
+
+        OneSignalDeferred.push(async function(OneSignal) {
+            oneSignalInstance = OneSignal;
+            try {
+                const basePath = window.location.pathname.includes('/MyGPF_Dashboard/') ? '/MyGPF_Dashboard/' : '/';
+                const swPath = basePath + 'OneSignalSDKWorker.js';
+
+                await OneSignal.init({
+                    appId: "75c2e6eb-4705-4c8c-a05d-06851508e3a0",
+                    serviceWorkerPath: swPath,
+                    serviceWorkerParam: { scope: basePath },
+                    allowLocalhostAsSecureOrigin: true
+                });
+
+                const checkPermission = async () => {
+                    try {
+                        const isGranted = (window.Notification && Notification.permission === 'granted');
+                        updateNotificationBellUI(isGranted);
+                    } catch (permErr) {
+                        console.warn("OneSignal permission check skipped:", permErr);
+                    }
+                };
+
+                if (OneSignal.Notifications) {
+                    OneSignal.Notifications.addEventListener("permissionChange", function(permission) {
+                        updateNotificationBellUI(permission);
+                    });
+                }
+
+                if (OneSignal.User && OneSignal.User.PushSubscription) {
+                    OneSignal.User.PushSubscription.addEventListener("change", function(change) {
+                        if (change && change.current && change.current.optedIn) {
+                            updateNotificationBellUI(true);
+                        }
+                    });
+                }
+
+                await checkPermission();
+            } catch (initErr) {
+                console.warn("OneSignal initialization gracefully caught:", initErr.message || initErr);
+                oneSignalInitFailed = true;
+                oneSignalErrorMsg = initErr && initErr.message ? initErr.message : String(initErr);
+            }
+        });
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for Investment Charting -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Pro/Free Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'Prompt', 'Sarabun', 'sans-serif'],
+                        num: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        fintech: {
+                            bg: '#080C14',
+                            surface: '#0F1523',
+                            surfaceElevated: '#172033',
+                            surfaceHover: '#1E2A42',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            borderLight: 'rgba(255, 255, 255, 0.14)',
+                            primary: '#3B82F6',
+                            primaryGlow: '#2563EB',
+                            emerald: '#10B981',
+                            emeraldLight: '#34D399',
+                            emeraldGlow: 'rgba(16, 185, 129, 0.2)',
+                            rose: '#F43F5E',
+                            roseLight: '#FB7185',
+                            roseGlow: 'rgba(244, 63, 94, 0.2)',
+                            muted: '#94A3B8'
+                        }
+                    },
+                    boxShadow: {
+                        'neon-blue': '0 0 25px -5px rgba(59, 130, 246, 0.3)',
+                        'neon-green': '0 0 25px -5px rgba(16, 185, 129, 0.25)',
+                        'fintech-card': '0 10px 32px -4px rgba(0, 0, 0, 0.12)',
+                        'fintech-card-dark': '0 8px 30px -4px rgba(0, 0, 0, 0.55)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Responsive Body Backgrounds */
+        body {
+            background-color: #F1F5F9;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.06) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(248, 250, 252, 0.6) 0px, transparent 100%);
+            background-attachment: fixed;
+            color: #0F172A;
+            font-feature-settings: 'tnum' on, 'lnum' on;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        html.dark body {
+            background-color: #080C14;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(15, 21, 35, 0.5) 0px, transparent 100%);
+            color: #F8FAFC;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.3);
+            border-radius: 9999px;
+        }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 195px;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.35; transform: scale(1); filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.4)); }
+            50% { opacity: 0.85; transform: scale(1.05); filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.8)); }
+        }
+        .animate-pulse-glow {
+            animation: pulseGlow 2.5s ease-in-out infinite;
+        }
+
+        /* Adaptive Glass Panels (Day / Night) */
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            transition: all 0.3s ease;
+        }
+        html.dark .glass-panel {
+            background: linear-gradient(135deg, rgba(23, 32, 51, 0.8) 0%, rgba(15, 21, 35, 0.85) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .glass-panel-elevated {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.85) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(203, 213, 225, 0.7);
+            transition: all 0.3s ease;
+        }
+        html.dark .glass-panel-elevated {
+            background: linear-gradient(145deg, rgba(30, 42, 66, 0.6) 0%, rgba(15, 21, 35, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="flex justify-center items-start min-h-screen p-0 sm:py-6 sm:px-4 text-slate-800 dark:text-slate-100 relative selection:bg-blue-600/30">
+
+    <div id="loading-screen" class="fixed inset-0 bg-slate-50 dark:bg-[#080C14] z-[9999] flex flex-col items-center justify-center transition-all duration-700 ease-in-out p-6">
+        <div class="relative flex flex-col items-center max-w-xs w-full text-center">
+            
+            <!-- Radiant Background Glow -->
+            <div class="absolute -top-12 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative flex items-center justify-center mb-6">
+                <div class="w-24 h-24 rounded-3xl p-[1px] bg-gradient-to-tr from-blue-600 via-indigo-500 to-teal-400 animate-pulse-glow shadow-neon-blue">
+                    <div class="w-full h-full bg-white dark:bg-[#0F1523] rounded-3xl flex items-center justify-center shadow-inner">
+                        <i class="fa-solid fa-chart-line text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-emerald-500 text-3xl"></i>
+                    </div>
+                </div>
+                <div class="absolute -bottom-1 -right-1 w-7 h-7 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-full border-2 border-slate-50 dark:border-[#080C14] flex items-center justify-center shadow-lg">
+                    <i class="fa-solid fa-bolt text-xs text-white"></i>
+                </div>
+            </div>
+
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">
+                MY <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-teal-500 to-emerald-500 dark:from-blue-400 dark:via-teal-300 dark:to-emerald-400 font-black">GPF</span>
+            </h1>
+            <p class="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 font-medium mb-5">Wealth & Portfolio Terminal</p>
+
+            <div class="w-full bg-slate-200 dark:bg-slate-800/60 rounded-full h-1.5 overflow-hidden relative border border-slate-300/50 dark:border-slate-700/50 mb-3">
+                <div id="loading-progress-bar" class="bg-gradient-to-r from-blue-500 via-teal-400 to-emerald-400 h-full rounded-full transition-all duration-500 ease-out w-[15%] shadow-neon-blue"></div>
+            </div>
+
+            <p id="loading-status-text" class="text-xs text-slate-500 dark:text-slate-400 font-medium transition-all duration-300">กำลังเชื่อมต่อพอร์ตการลงทุน...</p>
+
+            <div id="loading-retry-container" class="hidden pt-4">
+                <button onclick="retryFetchData()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/30 transition-all flex items-center space-x-2 mx-auto active:scale-95">
+                    <i class="fa-solid fa-rotate-right text-xs"></i>
+                    <span>ลองเชื่อมต่อใหม่อีกครั้ง</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <main id="app-container" class="w-full max-w-md bg-white dark:bg-[#0D121F] min-h-screen sm:min-h-0 sm:rounded-[36px] shadow-xl dark:shadow-fintech-card overflow-hidden flex flex-col justify-between border border-slate-200/80 dark:border-fintech-border relative backdrop-blur-xl transition-colors duration-400">
+
+        <!-- Top Header & Hero Balance Container -->
+        <header class="p-5 pb-4 relative z-10">
+
+            <!-- Navbar Row -->
+            <div class="flex justify-between items-center mb-5">
+                <!-- Brand Badge -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-0.5 shadow-lg shadow-blue-600/30 flex items-center justify-center">
+                        <div class="w-full h-full bg-white/90 dark:bg-[#0F1523]/80 rounded-[14px] flex items-center justify-center backdrop-blur-sm">
+                            <i class="fa-solid fa-chart-pie text-blue-600 dark:text-blue-400 text-base"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-1.5 leading-none">
+                            <span class="text-slate-900 dark:text-white font-extrabold text-base tracking-wider">MY</span>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-500 dark:from-blue-400 dark:to-teal-400 font-black text-base tracking-wider">GPF</span>
+                            <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 uppercase tracking-wider">PRO</span>
+                        </div>
+                        <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">กองทุนบำเหน็จบำนาญข้าราชการ</span>
+                    </div>
+                </div>
+
+                <!-- User Profile & Avatar -->
+                <div class="flex items-center space-x-2.5">
+                    <div class="text-right">
+                        <div class="text-[11px] text-slate-400 font-medium">สวัสดี</div>
+                        <div id="user-name" class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[110px]">สมผล สังขะวรรณ</div>
+                    </div>
+                    <div class="relative cursor-pointer group" onclick="document.getElementById('profile-upload').click()" title="คลิกเพื่อเปลี่ยนรูปโปรไฟล์">
+                        <div class="w-10 h-10 rounded-full p-[1.5px] bg-gradient-to-tr from-blue-500 via-teal-400 to-indigo-500 shadow-md">
+                            <img id="user-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Somphon" alt="Profile" class="w-full h-full rounded-full bg-slate-100 dark:bg-[#0D121F] object-cover transition-transform group-hover:scale-105" onerror="this.src='https://placehold.co/100x100/1e293b/ffffff?text=User'">
+                        </div>
+                        <div class="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <i class="fa-solid fa-camera text-white text-[11px]"></i>
+                        </div>
+                    </div>
+                    <input type="file" id="profile-upload" accept="image/*" class="hidden" onchange="handleProfileUpload(event)">
+                </div>
+            </div>
+
+            <div class="glass-panel-elevated rounded-3xl p-5 shadow-sm dark:shadow-fintech-card relative overflow-hidden mb-4">
+                
+                <!-- Background Accent Glow -->
+                <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-blue-600/10 dark:bg-blue-600/15 rounded-full blur-2xl pointer-events-none"></div>
+
+                <!-- Card Header: Title & Quick Utility Controls with Theme Switcher -->
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center space-x-1.5 sm:space-x-2">
+                        <span class="text-xs text-slate-600 dark:text-slate-300 font-medium tracking-wide">มูลค่าพอร์ตรวม</span>
+                        
+                        <!-- Day / Night Mode Auto Switcher Button -->
+                        <button id="btn-theme-mode" onclick="cycleThemeMode()" class="h-7 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-600 dark:text-slate-300 transition-colors flex items-center space-x-1 border border-slate-200/80 dark:border-white/5 text-[11px] font-semibold" title="โหมดกลางวัน/กลางคืน (อัตโนมัติตามเวลา)">
+                            <i id="theme-mode-icon" class="fa-solid fa-clock text-amber-500 text-[11px]"></i>
+                            <span id="theme-mode-text" class="text-[10px] hidden xs:inline">Auto</span>
+                        </button>
+
+                        <!-- Push Notification Bell -->
+                        <button id="btn-notification" onclick="togglePushNotificationPermission()" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center justify-center border border-slate-200/80 dark:border-white/5 relative" title="ตั้งค่าการแจ้งเตือน iPhone">
+                            <i id="bell-icon" class="fa-regular fa-bell text-xs"></i>
+                        </button>
+
+                        <!-- Sync Data Button -->
+                        <button onclick="fetchSheetData(true)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-500 dark:text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors flex items-center justify-center border border-slate-200/80 dark:border-white/5" title="รีเฟรชข้อมูล">
+                            <i id="sync-icon" class="fa-solid fa-rotate-right text-xs"></i>
+                        </button>
+                    </div>
+
+                    <!-- Date Navigator Pill (Calendar icon removed) -->
+                    <div onclick="openCalendarModal()" class="flex items-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/90 dark:hover:bg-slate-800/90 transition-all px-2.5 py-1.5 rounded-full border border-slate-200/80 dark:border-white/10 shadow-sm cursor-pointer group" title="คลิกเพื่อเลือกวันที่จากปฏิทิน">
+                        <button onclick="event.stopPropagation(); navigateDate(-1)" class="text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors px-1" title="ย้อนหลัง 1 วัน">
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                        </button>
+                        <div class="flex items-center px-1 min-w-[70px] justify-center">
+                            <span id="current-selected-date" class="text-[11px] font-semibold text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white tracking-tight">-</span>
+                        </div>
+                        <button onclick="event.stopPropagation(); navigateDate(1)" class="text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors px-1" title="ถัดไป 1 วัน">
+                            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Total Amount Big Display -->
+                <div class="flex items-baseline space-x-1 my-1">
+                    <span class="text-2xl font-semibold text-blue-600 dark:text-blue-400">฿</span>
+                    <span id="total-portfolio-value-main" class="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white font-num">-</span>
+                    <span id="total-portfolio-value-dec" class="text-xl font-bold text-slate-500 dark:text-slate-400 font-num"></span>
+                </div>
+
+                <div class="flex items-center space-x-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
+                    <span>สถานะสินทรัพย์: คำนวณตามจริงแบบสะสม</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                
+                <!-- Today Card -->
+                <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-600/40 transition-all duration-300 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">ผลตอบแทนวันนี้</span>
+                        <div class="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                            <i class="fa-solid fa-calendar-day text-[11px]"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div id="today-amount" class="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight font-num truncate">-</div>
+                        <div class="flex items-center space-x-1 mt-1">
+                            <div id="today-pct" class="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 font-num">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profit Year Card (Money-Weighted Return YTD) -->
+                <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-600/40 transition-all duration-300 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span id="profit-year-label" class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">กำไรปี -</span>
+                        <div class="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <i class="fa-solid fa-arrow-trend-up text-[11px]"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div id="profit-year-amount" class="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight font-num truncate">-</div>
+                        <div class="flex items-center space-x-1 mt-1">
+                            <div id="profit-year-pct" class="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 font-num">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-2.5">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-chart-area text-blue-600 dark:text-blue-400 text-xs"></i>
+                    <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">แนวโน้มพอร์ต</span>
+                </div>
+                
+                <div class="relative">
+                    <select id="chart-range-select" onchange="updateChartRange()" class="bg-slate-100 dark:bg-[#12192A] text-slate-700 dark:text-slate-300 text-xs font-medium rounded-xl px-3 py-1.5 pr-7 border border-slate-200 dark:border-white/10 appearance-none focus:outline-none focus:border-blue-500 cursor-pointer shadow-sm">
+                        <option value="7d" selected>7 วันล่าสุด</option>
+                        <option value="monthly">รายเดือน</option>
+                        <option value="yearly">รายปี</option>
+                        <option value="all">ข้อมูลทั้งหมด</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                </div>
+            </div>
+
+            <!-- Canvas Chart Container -->
+            <div class="chart-container glass-panel rounded-2xl p-2.5 border border-slate-200/80 dark:border-white/5">
+                <canvas id="portfolioChart"></canvas>
+            </div>
+        </header>
+
+        <section class="bg-slate-50 dark:bg-[#101624] text-slate-800 dark:text-slate-100 p-5 rounded-t-[32px] border-t border-slate-200 dark:border-white/10 min-h-[240px] shadow-lg dark:shadow-2xl flex-grow flex flex-col justify-between transition-colors duration-400">
+            <div>
+                <!-- Plan Header -->
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-3 h-3 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-neon-green"></div>
+                        <h3 id="card-plan-title" class="text-sm font-bold text-slate-900 dark:text-white tracking-wide truncate max-w-[210px] sm:max-w-xs">
+                            แผนการลงทุนตามหลักชะรีอะฮ์
+                        </h3>
+                    </div>
+                    <button onclick="openDetailsModal()" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors flex items-center space-x-1.5 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1 rounded-full border border-blue-500/20 cursor-pointer" title="ดูตารางประวัติทั้งหมด">
+                        <span>ดูประวัติ</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
+                </div>
+
+                <!-- Table Header Column Labels -->
+                <div class="flex justify-between items-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 py-2 border-b border-slate-200 dark:border-white/10 px-2 bg-slate-200/60 dark:bg-slate-900/40 rounded-xl mb-1">
+                    <span class="w-[45%] text-left">งวดเวลา</span>
+                    <span class="w-[28%] text-right">ผลตอบแทน</span>
+                    <span class="w-[27%] text-right">% กำไร/ขาดทุน</span>
+                </div>
+
+                <!-- Plan Breakdown List Items -->
+                <div id="plan-breakdown-container" class="divide-y divide-slate-200/70 dark:divide-white/5 max-h-[260px] overflow-y-auto custom-scrollbar pr-1">
+                </div>
+            </div>
+
+            <!-- Footer Badge -->
+            <div class="pt-3 mt-2 border-t border-slate-200 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+                <span>My GPF Dashboard v2.6</span>
+                <span class="flex items-center space-x-1">
+                    <i class="fa-solid fa-shield-halved text-emerald-500/80"></i>
+                    <span>ข้อมูลปลอดภัยบนชีตส่วนตัว</span>
+                </span>
+            </div>
+        </section>
+
+        <!-- Details Modal Pop-up (Day/Night Adaptive) -->
+        <div id="details-modal" onclick="if(event.target===this) closeDetailsModal()" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 opacity-0 pointer-events-none transition-all duration-300">
+            <div class="bg-white dark:bg-[#0F1523] text-slate-900 dark:text-white rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden transform scale-95 transition-all duration-300" id="details-modal-content">
+                <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-white/10 bg-white/95 dark:bg-[#0F1523]/95 sticky top-0 z-10">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                            <i class="fa-solid fa-list-check text-xs"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-wide">ประวัติผลตอบแทนทั้งหมด</h3>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">บันทึกข้อมูลย้อนหลังจากฐานข้อมูล</p>
+                        </div>
+                    </div>
+                    <button onclick="closeDetailsModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                </div>
+                <div class="overflow-y-auto custom-scrollbar p-3 sm:p-4 flex-grow">
+                    <table class="w-full text-left border-collapse table-fixed">
+                        <thead class="sticky top-0 bg-white dark:bg-[#0F1523] z-10">
+                            <tr class="text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
+                                <th class="py-2.5 px-2 font-semibold text-center w-[30%]">วันที่</th>
+                                <th class="py-2.5 px-2 font-semibold text-right w-[35%]">มูลค่าพอร์ต</th>
+                                <th class="py-2.5 px-2 font-semibold text-right w-[35%]">ผลตอบแทน</th>
+                            </tr>
+                        </thead>
+                        <tbody id="details-table-body" class="divide-y divide-slate-100 dark:divide-white/5 text-xs">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Modal Pop-up (Day/Night Adaptive) -->
+        <div id="calendar-modal" onclick="if(event.target===this) closeCalendarModal()" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+            <div id="calendar-modal-content" class="bg-white dark:bg-[#12192A] text-slate-900 dark:text-white rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-[340px] flex flex-col overflow-hidden transform scale-95 transition-all duration-300 p-5">
+                
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center space-x-1 select-none">
+                        <span id="calendar-month-year-title" class="text-base font-bold text-slate-900 dark:text-white tracking-wide">กันยายน 2569</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="changeCalendarMonth(-1)" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 hover:text-white hover:bg-blue-600 text-xs font-bold transition-all flex items-center justify-center" title="เดือนก่อนหน้า">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button onclick="changeCalendarMonth(1)" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 hover:text-white hover:bg-blue-600 text-xs font-bold transition-all flex items-center justify-center" title="เดือนถัดไป">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <button onclick="closeCalendarModal()" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs transition-colors flex items-center justify-center ml-1" title="ปิด">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 text-center text-xs text-slate-500 dark:text-slate-400 font-semibold mb-2 py-1 select-none">
+                    <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
+                </div>
+
+                <div id="calendar-days-grid" class="grid grid-cols-7 gap-y-2 text-center select-none">
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between select-none">
+                    <div class="flex items-center space-x-3 text-[11px] text-slate-500 dark:text-slate-400">
+                        <div class="flex items-center space-x-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-neon-green inline-block"></span>
+                            <span>กำไร</span>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <span class="w-2 h-2 rounded-full bg-rose-500 shadow-neon-rose inline-block"></span>
+                            <span>ขาดทุน</span>
+                        </div>
+                    </div>
+                    <button onclick="goToLatestDate()" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors flex items-center space-x-1.5 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-full border border-blue-500/25">
+                        <i class="fa-solid fa-clock-rotate-left text-[11px]"></i>
+                        <span>วันล่าสุด</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="ios-guide-modal" onclick="if(event.target===this) closeIosGuideModal()" class="fixed inset-0 bg-black/70 dark:bg-black/80 backdrop-blur-md z-[999] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+            <div class="bg-white dark:bg-[#12192A] text-slate-900 dark:text-white rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-sm p-5 space-y-4">
+                <div class="flex items-center space-x-3 border-b border-slate-200 dark:border-white/10 pb-3">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-600/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-mobile-screen-button"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-900 dark:text-white text-base">วิธีเปิดการแจ้งเตือนบนมือถือ</h4>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">เพิ่มแอปลงหน้าจอโฮมก่อนใช้งาน</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3 text-xs text-slate-600 dark:text-slate-300">
+                    <div class="flex items-start space-x-2.5">
+                        <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">1</span>
+                        <span>แตะปุ่มแชร์ <b>[ <i class="fa-solid fa-arrow-up-from-bracket text-blue-500"></i> ]</b> ด้านล่างของ Safari</span>
+                    </div>
+                    <div class="flex items-start space-x-2.5">
+                        <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">2</span>
+                        <span>เลือก <b>"เพิ่มไปยังหน้าจอโฮม" (Add to Home Screen)</b></span>
+                    </div>
+                    <div class="flex items-start space-x-2.5">
+                        <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">3</span>
+                        <span>เปิดแอปจาก <b>ไอคอนบนหน้าจอโทรศัพท์</b></span>
+                    </div>
+                    <div class="flex items-start space-x-2.5">
+                        <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">4</span>
+                        <span>แตะที่ <b>กระดิ่ง 🔔</b> แล้วเลือก <b>"อนุญาต" (Allow)</b></span>
+                    </div>
+                </div>
+
+                <button onclick="closeIosGuideModal()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 font-semibold text-xs rounded-xl shadow-lg shadow-blue-600/30 text-white transition-all active:scale-95">
+                    เข้าใจแล้ว
+                </button>
+            </div>
+        </div>
+
+        <div id="ios-settings-modal" onclick="if(event.target===this) closeIosSettingsModal()" class="fixed inset-0 bg-black/70 dark:bg-black/80 backdrop-blur-md z-[999] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+            <div class="bg-white dark:bg-[#12192A] text-slate-900 dark:text-white rounded-3xl border border-rose-500/30 shadow-2xl w-full max-w-sm p-5 space-y-4">
+                <div class="flex items-center space-x-3 border-b border-slate-200 dark:border-white/10 pb-3">
+                    <div class="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-500 dark:text-rose-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-bell-slash"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-900 dark:text-white text-base">การแจ้งเตือนถูกปิดอยู่</h4>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">กรุณาเปิดการแจ้งเตือนในการตั้งค่า</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                    <p>หากเคยปฏิเสธสิทธิ์ไว้ สามารถเปิดด้วยตนเองได้ดังนี้:</p>
+                    <div class="bg-slate-100 dark:bg-slate-900/80 p-3 rounded-2xl border border-slate-200 dark:border-white/5 space-y-1.5 font-medium">
+                        <div>1. ไปที่ <b>การตั้งค่า (Settings)</b> ของอุปกรณ์</div>
+                        <div>2. แตะที่ <b>การแจ้งเตือน (Notifications)</b></div>
+                        <div>3. ค้นหาชื่อ <b>My GPF</b></div>
+                        <div>4. เปิด <b>"อนุญาตการแจ้งเตือน" (Allow Notifications)</b></div>
+                    </div>
+                </div>
+
+                <button onclick="closeIosSettingsModal()" class="w-full py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-semibold text-xs rounded-xl transition-colors">
+                    ปิดหน้าต่างนี้
+                </button>
+            </div>
+        </div>
+
+        <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 dark:bg-[#0F1523]/95 backdrop-blur-md text-white text-xs px-4 py-2.5 rounded-full shadow-2xl opacity-0 pointer-events-none transition-all duration-300 border border-white/10 z-50 flex items-center space-x-2.5">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+            <span id="toast-msg">ดำเนินการสำเร็จ</span>
+        </div>
+    </main>
+
+    <script>
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTv1M6gCEH9fHNI2FNAjv9W5onhaOufKJTOkdeDBFQsDU5_EB1v6y4abGtWTmHAwW0N4AmRFDG159ew/pub?gid=1837893473&single=true&output=csv";
+        
+        let rawData = [];
+        let selectedIndex = 0;
+        let chartInstance = null;
+
+        let calViewYear = 2569;
+        let calViewMonth = 7;
+
+        // Theme Mode State: 'auto' | 'light' | 'dark'
+        let currentThemeSetting = localStorage.getItem('gpf_theme_pref') || 'auto';
+
+        const THAI_FULL_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        let immediateFetchPromise = fetchSheetCSV();
+
+        window.onload = async function() {
+            initThemeSystem();
+            loadSavedAvatar();
+            initChart();
+            await handleInitialDataLoad();
+        };
+
+        // ==========================================
+        // Automatic Day / Night Mode Management
+        // ==========================================
+        function initThemeSystem() {
+            applyCurrentTheme();
+
+            // Periodic check every 60 seconds for auto time switch (06:00 / 18:00)
+            setInterval(() => {
+                if (currentThemeSetting === 'auto') {
+                    applyCurrentTheme(false);
+                }
+            }, 60000);
+
+            // Listen to OS prefers-color-scheme changes
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                    if (currentThemeSetting === 'auto') {
+                        applyCurrentTheme(false);
+                    }
+                });
+            }
+        }
+
+        function isDaytime() {
+            const currentHour = new Date().getHours();
+            return currentHour >= 6 && currentHour < 18; // 06:00 - 17:59
+        }
+
+        function applyCurrentTheme(triggerChartRedraw = true) {
+            let isDark = false;
+            let displayMode = '';
+
+            if (currentThemeSetting === 'dark') {
+                isDark = true;
+                displayMode = 'dark';
+            } else if (currentThemeSetting === 'light') {
+                isDark = false;
+                displayMode = 'light';
+            } else {
+                // Auto mode: check daytime
+                isDark = !isDaytime();
+                displayMode = 'auto';
+            }
+
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+
+            updateThemeButtonUI(displayMode, isDark);
+
+            if (triggerChartRedraw && chartInstance) {
+                renderChart();
+            }
+        }
+
+        function cycleThemeMode() {
+            if (currentThemeSetting === 'auto') {
+                currentThemeSetting = 'light';
+                showToast("เปลี่ยนเป็นโหมดกลางวัน ☀️", "info");
+            } else if (currentThemeSetting === 'light') {
+                currentThemeSetting = 'dark';
+                showToast("เปลี่ยนเป็นโหมดกลางคืน 🌙", "info");
+            } else {
+                currentThemeSetting = 'auto';
+                const status = isDaytime() ? "กลางวัน ☀️" : "กลางคืน 🌙";
+                showToast(`โหมดอัตโนมัติตามเวลา (ขณะนี้: ${status})`, "success");
+            }
+
+            try {
+                localStorage.setItem('gpf_theme_pref', currentThemeSetting);
+            } catch (e) {}
+
+            applyCurrentTheme(true);
+        }
+
+        function updateThemeButtonUI(mode, isCurrentlyDark) {
+            const icon = document.getElementById('theme-mode-icon');
+            const text = document.getElementById('theme-mode-text');
+            const btn = document.getElementById('btn-theme-mode');
+
+            if (!icon || !btn) return;
+
+            if (mode === 'auto') {
+                icon.className = isCurrentlyDark ? 
+                    "fa-solid fa-moon text-blue-400 text-[11px]" : 
+                    "fa-solid fa-sun text-amber-500 text-[11px]";
+                if (text) text.innerText = isCurrentlyDark ? "Auto 🌙" : "Auto ☀️";
+                btn.title = `โหมดอัตโนมัติ (ปัจจุบัน: ${isCurrentlyDark ? 'กลางคืน' : 'กลางวัน'}) - คลิกเพื่อเปลี่ยน`;
+            } else if (mode === 'light') {
+                icon.className = "fa-solid fa-sun text-amber-500 text-[11px]";
+                if (text) text.innerText = "Day ☀️";
+                btn.title = "โหมดกลางวัน (Light) - คลิกเพื่อเปลี่ยน";
+            } else {
+                icon.className = "fa-solid fa-moon text-indigo-400 text-[11px]";
+                if (text) text.innerText = "Night 🌙";
+                btn.title = "โหมดกลางคืน (Dark) - คลิกเพื่อเปลี่ยน";
+            }
+        }
+
+        async function togglePushNotificationPermission() {
+            if (oneSignalInitFailed && oneSignalErrorMsg.includes("Can only be used on")) {
+                showToast("ที่อยู่ URL ในระบบไม่ตรง", "info");
+                return;
+            }
+
+            const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || 
+                          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const isStandalone = window.navigator.standalone === true || 
+                                 window.matchMedia('(display-mode: standalone)').matches;
+
+            if (isIOS && !isStandalone) {
+                openIosGuideModal();
+                return;
+            }
+
+            if (window.Notification && Notification.permission === 'denied') {
+                openIosSettingsModal();
+                return;
+            }
+
+            if (window.Notification && Notification.permission === 'granted') {
+                if (oneSignalInstance && oneSignalInstance.User && oneSignalInstance.User.PushSubscription) {
+                    try { await oneSignalInstance.User.PushSubscription.optIn(); } catch (e) {}
+                }
+                showToast("เปิดรับการแจ้งเตือนเรียบร้อยแล้ว 🔔", "success");
+                updateNotificationBellUI(true);
+                return;
+            }
+
+            try {
+                let permission = 'default';
+                if ('Notification' in window && typeof Notification.requestPermission === 'function') {
+                    permission = await Notification.requestPermission();
+                } else if (oneSignalInstance && oneSignalInstance.Notifications) {
+                    permission = await oneSignalInstance.Notifications.requestPermission();
+                }
+
+                if (permission === 'granted') {
+                    if (oneSignalInstance && oneSignalInstance.User && oneSignalInstance.User.PushSubscription) {
+                        await oneSignalInstance.User.PushSubscription.optIn();
+                    }
+                    updateNotificationBellUI(true);
+                    showToast("เปิดการแจ้งเตือนสำเร็จ! 🔔", "success");
+                } else if (permission === 'denied') {
+                    openIosSettingsModal();
+                } else {
+                    showToast("ยังไม่ได้กดยืนยันอนุญาต", "info");
+                }
+            } catch (err) {
+                console.error("Permission request failed:", err);
+                showToast("เกิดข้อผิดพลาด: " + err.message, "info");
+            }
+        }
+
+        function openIosGuideModal() {
+            const modal = document.getElementById('ios-guide-modal');
+            if (modal) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                modal.classList.add('opacity-100');
+            }
+        }
+
+        function closeIosGuideModal() {
+            const modal = document.getElementById('ios-guide-modal');
+            if (modal) {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function openIosSettingsModal() {
+            const modal = document.getElementById('ios-settings-modal');
+            if (modal) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                modal.classList.add('opacity-100');
+            }
+        }
+
+        function closeIosSettingsModal() {
+            const modal = document.getElementById('ios-settings-modal');
+            if (modal) {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function updateNotificationBellUI(isEnabled) {
+            const bellIcon = document.getElementById('bell-icon');
+            const btnNotification = document.getElementById('btn-notification');
+
+            if (!bellIcon) return;
+
+            if (isEnabled) {
+                bellIcon.className = "fa-solid fa-bell text-amber-400 text-xs";
+                if (btnNotification) btnNotification.title = "เปิดรับการแจ้งเตือนในโทรศัพท์แล้ว";
+            } else {
+                bellIcon.className = "fa-regular fa-bell text-slate-400 text-xs";
+                if (btnNotification) btnNotification.title = "คลิกเพื่อเปิดการแจ้งเตือนในโทรศัพท์";
+            }
+        }
+
+        async function handleInitialDataLoad() {
+            const startTime = Date.now();
+            setLoadingStatus("กำลังเชื่อมต่อพอร์ตการลงทุน...", 25);
+
+            try {
+                await sleep(400);
+                setLoadingStatus("กำลังดาวน์โหลดข้อมูลล่าสุด...", 55);
+
+                const csvText = await immediateFetchPromise;
+                if (!csvText) throw new Error("No data returned");
+
+                setLoadingStatus("ประมวลผลตัวเลขและกราฟ...", 80);
+                await sleep(350);
+
+                const parsed = parseCSVData(csvText);
+
+                if (parsed && parsed.length > 0) {
+                    rawData = parsed;
+                    selectedIndex = rawData.length - 1;
+                    updateDashboard();
+                    
+                    setLoadingStatus("พอร์ตของคุณพร้อมใช้งานแล้ว", 100);
+
+                    const elapsed = Date.now() - startTime;
+                    const remaining = Math.max(400, 1600 - elapsed);
+                    await sleep(remaining);
+
+                    hideLoadingScreen();
+                } else {
+                    throw new Error("ข้อมูลไม่ถูกต้อง");
+                }
+            } catch (err) {
+                console.error("Initial load failed:", err);
+                showLoadingError("ไม่สามารถเชื่อมต่อฐานข้อมูลได้");
+            }
+        }
+
+        async function fetchSheetCSV() {
+            try {
+                const res = await fetchWithTimeout(CSV_URL, { cache: "no-cache" }, 4500);
+                if (res && res.ok) return await res.text();
+            } catch (e) {
+                console.warn("Direct fetch slow or blocked, switching to fast proxy...");
+            }
+
+            try {
+                const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(CSV_URL);
+                const proxyRes = await fetchWithTimeout(proxyUrl, { cache: "no-cache" }, 5500);
+                if (proxyRes && proxyRes.ok) return await proxyRes.text();
+            } catch (e) {
+                console.error("All fetch attempts failed", e);
+                throw e;
+            }
+            return null;
+        }
+
+        function setLoadingStatus(text, pct) {
+            const statusEl = document.getElementById('loading-status-text');
+            if (statusEl) statusEl.innerText = text;
+            setLoadingProgress(pct);
+        }
+
+        function showLoadingError(msg) {
+            const statusEl = document.getElementById('loading-status-text');
+            if (statusEl) statusEl.innerText = msg;
+            const retryBox = document.getElementById('loading-retry-container');
+            if (retryBox) retryBox.classList.remove('hidden');
+        }
+
+        async function retryFetchData() {
+            const retryBox = document.getElementById('loading-retry-container');
+            if (retryBox) retryBox.classList.add('hidden');
+            setLoadingStatus("กำลังเชื่อมต่ออีกครั้ง...", 30);
+            immediateFetchPromise = fetchSheetCSV();
+            await handleInitialDataLoad();
+        }
+
+        function setLoadingProgress(pct) {
+            const bar = document.getElementById('loading-progress-bar');
+            if (bar) bar.style.width = pct + '%';
+        }
+
+        function hideLoadingScreen() {
+            const screen = document.getElementById('loading-screen');
+            if (!screen) return;
+            screen.classList.add('opacity-0', 'pointer-events-none', 'scale-105');
+            setTimeout(() => {
+                screen.style.display = 'none';
+            }, 700);
+        }
+
+        function handleProfileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                showToast("ขนาดไฟล์ต้องไม่เกิน 5MB", "info");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                const avatarImg = document.getElementById('user-avatar');
+                if (avatarImg) avatarImg.src = dataUrl;
+                try {
+                    localStorage.setItem('gpf_user_avatar', dataUrl);
+                    showToast("อัปเดตรูปโปรไฟล์สำเร็จ", "success");
+                } catch (err) {
+                    console.warn("Storage quota exceeded", err);
+                    showToast("เปลี่ยนรูปโปรไฟล์เรียบร้อยแล้ว", "success");
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function loadSavedAvatar() {
+            try {
+                const savedAvatar = localStorage.getItem('gpf_user_avatar');
+                if (savedAvatar) {
+                    const avatarImg = document.getElementById('user-avatar');
+                    if (avatarImg) avatarImg.src = savedAvatar;
+                }
+            } catch (err) {
+                console.warn("Could not load saved avatar", err);
+            }
+        }
+
+        async function fetchWithTimeout(url, options = {}, timeoutMs = 4500) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                clearTimeout(id);
+                return response;
+            } catch (err) {
+                clearTimeout(id);
+                throw err;
+            }
+        }
+
+        async function fetchSheetData(showToastAlert = false) {
+            const syncIcon = document.getElementById('sync-icon');
+            if (syncIcon) syncIcon.classList.add('fa-spin');
+
+            try {
+                const csvText = await fetchSheetCSV();
+                const parsed = parseCSVData(csvText);
+
+                if (parsed && parsed.length > 0) {
+                    rawData = parsed;
+                    selectedIndex = rawData.length - 1;
+                    updateDashboard();
+                    if (showToastAlert) showToast("อัปเดตข้อมูลพอร์ตสำเร็จ", "success");
+                } else {
+                    throw new Error("Empty or invalid CSV structure");
+                }
+            } catch (error) {
+                console.error("Error updating CSV:", error);
+                if (showToastAlert) showToast("ไม่สามารถอัปโหลดข้อมูลได้", "info");
+            } finally {
+                if (syncIcon) syncIcon.classList.remove('fa-spin');
+            }
+        }
+
+        function parseCSVData(csvText) {
+            const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
+            if (lines.length < 2) return null;
+
+            const headers = parseCSVLine(lines[0]);
+            const cleanHeaders = headers.map(h => cleanStr(h));
+            
+            let colDate        = cleanHeaders.findIndex(h => h.includes('วันที่'));
+            let colPrincipal   = cleanHeaders.findIndex(h => h.includes('เงินต้นสะสม') || h.includes('เงินต้น'));
+            let colReturnAccum = cleanHeaders.findIndex(h => h.includes('ผลประโยชน์สะสม') || h.includes('กำไรสะสม'));
+            let colTotal       = cleanHeaders.findIndex(h => h.includes('รวมสะสม'));
+            let colDiff        = cleanHeaders.findIndex(h => h.includes('เพิ่ม/ลด'));
+            let colProfit      = cleanHeaders.findIndex(h => h.includes('กำไร/ขาดทุน') || (h.includes('กำไร') && !h.includes('สะสม')) || h.includes('ขาดทุน'));
+            let colReturn      = cleanHeaders.findIndex(h => h.includes('%ผลตอบแทน') || h.includes('ผลตอบแทน'));
+            let colPlan        = cleanHeaders.findIndex(h => h.includes('แผน'));
+
+            if (colDate === -1) colDate = 0;
+            if (colPrincipal === -1) colPrincipal = 1;
+            if (colReturnAccum === -1) colReturnAccum = 2;
+            if (colTotal === -1) colTotal = 3;
+            if (colDiff === -1) colDiff = 4;
+            if (colProfit === -1) colProfit = 7;
+            if (colReturn === -1) colReturn = 8;
+            if (colPlan === -1) colPlan = 12;
+
+            const list = [];
+            for (let i = 1; i < lines.length; i++) {
+                const row = parseCSVLine(lines[i]);
+                const rawDateStr = cleanStr(row[colDate]);
+                
+                if (!rawDateStr || !extractYear(rawDateStr)) continue;
+
+                list.push({
+                    rawIndex: list.length,
+                    dateStr: rawDateStr,
+                    principal: cleanNum(row[colPrincipal]),
+                    returnAccum: cleanNum(row[colReturnAccum]),
+                    total: cleanNum(row[colTotal]),
+                    diff: cleanNum(row[colDiff]),
+                    profit: cleanNum(row[colProfit]),
+                    returnPct: cleanNum(row[colReturn]),
+                    plan: cleanStr(row[colPlan]) || "แผนการลงทุนตามหลักชะรีอะฮ์"
+                });
+            }
+            return list.length > 0 ? list : null;
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"' || char === "'") {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+            return result;
+        }
+
+        function cleanNum(val) {
+            if (val === undefined || val === null) return 0;
+            const str = val.toString().replace(/,/g, '').replace(/%/g, '').replace(/฿/g, '').replace(/บาท/g, '').trim();
+            const num = parseFloat(str);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function cleanStr(val) {
+            return val ? val.toString().replace(/^["']|["']$/g, '').trim() : '';
+        }
+
+        function calculatePeriodReturn(currentRec, baseRec) {
+            if (!currentRec) return { profit: 0, pct: 0 };
+
+            const curReturn = currentRec.returnAccum !== undefined ? currentRec.returnAccum : 0;
+            const curPrincipal = currentRec.principal !== undefined ? currentRec.principal : 0;
+
+            if (!baseRec) {
+                const profit = curReturn;
+                const baseCost = curPrincipal;
+                const pct = baseCost > 0 ? (profit / baseCost) * 100 : 0;
+                return { profit, pct };
+            }
+
+            const baseReturn = baseRec.returnAccum !== undefined ? baseRec.returnAccum : 0;
+            const basePrincipal = baseRec.principal !== undefined ? baseRec.principal : 0;
+            const baseTotal = baseRec.total !== undefined ? baseRec.total : 0;
+
+            const profit = curReturn - baseReturn;
+            const newCapital = curPrincipal - basePrincipal;
+            const baseCost = baseTotal + newCapital;
+            const pct = baseCost > 0 ? (profit / baseCost) * 100 : 0;
+
+            return { profit, pct };
+        }
+
+        function navigateDate(direction) {
+            const newIndex = selectedIndex + direction;
+            if (newIndex >= 0 && newIndex < rawData.length) {
+                selectedIndex = newIndex;
+                updateDashboard();
+            } else {
+                showToast(direction < 0 ? "ถึงวันที่เก่าที่สุดแล้ว" : "ถึงวันที่ล่าสุดแล้ว", "info");
+            }
+        }
+
+        function updateDashboard() {
+            if (!rawData || rawData.length === 0) return;
+            const currentData = rawData[selectedIndex];
+
+            document.getElementById('current-selected-date').innerText = currentData.dateStr;
+
+            const totalVal = currentData.total;
+            const parts = formatMoneyParts(totalVal);
+            
+            document.getElementById('total-portfolio-value-main').innerText = parts.main;
+            document.getElementById('total-portfolio-value-dec').innerText = '.' + parts.dec;
+
+            // 1. วันนี้
+            const todayProfit = (currentData.profit !== undefined && currentData.profit !== 0) ? currentData.profit : currentData.diff;
+            const todayPct = currentData.returnPct;
+            renderMetric('today-amount', 'today-pct', todayProfit, todayPct, true);
+
+            // 2. กำไรปีนี้ (Money-Weighted Return YTD)
+            const currentYear = extractYear(currentData.dateStr);
+            let prevYearRec = null;
+
+            for (let i = selectedIndex - 1; i >= 0; i--) {
+                if (extractYear(rawData[i].dateStr) < currentYear) {
+                    prevYearRec = rawData[i];
+                    break;
+                }
+            }
+
+            const yearStats = calculatePeriodReturn(currentData, prevYearRec);
+            document.getElementById('profit-year-label').innerText = `กำไรปี ${currentYear || '2569'}`;
+            renderMetric('profit-year-amount', 'profit-year-pct', yearStats.profit, yearStats.pct, true);
+
+            renderPlanBreakdown();
+            renderChart();
+        }
+
+        function extractYear(dateStr) {
+            if (!dateStr) return null;
+            const match = dateStr.match(/\d{4}/);
+            return match ? match[0] : null;
+        }
+
+        function parseDateInfo(dateStr) {
+            if (!dateStr) return { day: 1, monthIdx: 0, monthShort: '', year: 2569 };
+            const clean = dateStr.trim();
+            const THAI_MONTHS_SHORT = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            
+            const parts = clean.split(/\s+/);
+            if (parts.length >= 3) {
+                const day = parseInt(parts[0], 10) || 1;
+                const monthStr = parts[1];
+                let year = parseInt(parts[2], 10) || 2569;
+                if (year < 100) year += 2500;
+                
+                let monthIdx = THAI_MONTHS_SHORT.findIndex(m => m.replace('.', '') === monthStr.replace('.', ''));
+                if (monthIdx === -1) {
+                    const fullMonths = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+                    monthIdx = fullMonths.findIndex(m => monthStr.includes(m));
+                }
+                if (monthIdx === -1) {
+                    const parsedNum = parseInt(monthStr, 10);
+                    if (!isNaN(parsedNum)) monthIdx = parsedNum - 1;
+                }
+                if (monthIdx === -1) monthIdx = 0;
+
+                return { day, monthIdx, monthShort: THAI_MONTHS_SHORT[monthIdx], year };
+            }
+
+            if (clean.includes('/')) {
+                const p = clean.split('/');
+                if (p.length >= 3) {
+                    const day = parseInt(p[0], 10) || 1;
+                    let monthIdx = (parseInt(p[1], 10) || 1) - 1;
+                    if (monthIdx < 0 || monthIdx > 11) monthIdx = 0;
+                    let year = parseInt(p[2], 10) || 2569;
+                    if (year < 100) year += 2500;
+                    return { day, monthIdx, monthShort: THAI_MONTHS_SHORT[monthIdx], year };
+                }
+            }
+
+            const yearMatch = clean.match(/\d{4}/);
+            const year = yearMatch ? parseInt(yearMatch[0], 10) : 2569;
+            return { day: 1, monthIdx: 0, monthShort: '', year };
+        }
+
+        function renderMetric(amountId, pctId, amountVal, pctVal, includeSign = true) {
+            const amountEl = document.getElementById(amountId);
+            const pctEl = document.getElementById(pctId);
+
+            amountEl.innerText = includeSign ? formatSignMoney(amountVal) : formatNumber(amountVal);
+            
+            const isPositive = pctVal > 0;
+            const isNegative = pctVal < 0;
+            const sign = isPositive ? '+' : (isNegative ? '-' : '');
+            const icon = isPositive ? 'fa-arrow-trend-up' : (isNegative ? 'fa-arrow-trend-down' : 'fa-minus');
+            
+            pctEl.innerHTML = `
+                <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-bold ${
+                    isPositive ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25' : 
+                    (isNegative ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/5')
+                }">
+                    <i class="fa-solid ${icon} text-[10px]"></i>
+                    <span>${sign}${Math.abs(pctVal).toFixed(2)}%</span>
+                </span>
+            `;
+
+            setTrendColor(amountEl, amountVal);
+        }
+
+        function setTrendColor(el, num) {
+            el.classList.remove('text-emerald-600', 'dark:text-emerald-400', 'text-rose-600', 'dark:text-rose-400', 'text-slate-900', 'dark:text-slate-100');
+            if (num > 0) {
+                el.classList.add('text-emerald-600', 'dark:text-emerald-400');
+            } else if (num < 0) {
+                el.classList.add('text-rose-600', 'dark:text-rose-400');
+            } else {
+                el.classList.add('text-slate-900', 'dark:text-slate-100');
+            }
+        }
+
+        function formatMoneyParts(num) {
+            const fixed = Math.abs(num).toFixed(2);
+            const [integerPart, decimalPart] = fixed.split('.');
+            return {
+                main: parseInt(integerPart, 10).toLocaleString('en-US'),
+                dec: decimalPart
+            };
+        }
+
+        function formatNumber(num) {
+            return Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function formatSignMoney(num) {
+            const prefix = num > 0 ? '+' : (num < 0 ? '-' : '');
+            return `${prefix}${formatNumber(num)}`;
+        }
+
+        function formatSignPct(num) {
+            const prefix = num > 0 ? '+' : (num < 0 ? '-' : '');
+            return `${prefix}${Math.abs(num).toFixed(2)}%`;
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('portfolioChart').getContext('2d');
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, 195);
+            if (isDark) {
+                gradient.addColorStop(0, 'rgba(16, 185, 129, 0.35)');
+                gradient.addColorStop(0.6, 'rgba(59, 130, 246, 0.15)');
+                gradient.addColorStop(1, 'rgba(15, 21, 35, 0.0)');
+            } else {
+                gradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+                gradient.addColorStop(0.6, 'rgba(59, 130, 246, 0.1)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'รวมสะสม',
+                        data: [],
+                        borderColor: isDark ? '#10B981' : '#059669',
+                        borderWidth: 2.5,
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.38,
+                        pointBackgroundColor: isDark ? '#10B981' : '#059669',
+                        pointBorderColor: isDark ? '#0F1523' : '#FFFFFF',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            enabled: false,
+                            external: customTooltipHandler
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: isDark ? '#94A3B8' : '#64748B',
+                                font: { size: 10, family: 'Prompt' },
+                                maxTicksLimit: 7
+                            }
+                        },
+                        y: {
+                            display: false,
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function customTooltipHandler(context) {
+            const {chart, tooltip} = context;
+            let tooltipEl = document.getElementById('chartjs-custom-tooltip');
+
+            if (!tooltipEl) {
+                tooltipEl = document.createElement('div');
+                tooltipEl.id = 'chartjs-custom-tooltip';
+                tooltipEl.style.position = 'absolute';
+                tooltipEl.style.pointerEvents = 'none';
+                tooltipEl.style.transition = 'all 0.15s ease';
+                tooltipEl.style.zIndex = '100';
+                tooltipEl.className = 'bg-slate-900/95 dark:bg-[#0F1523]/95 text-white px-3.5 py-2.5 rounded-2xl shadow-xl dark:shadow-fintech-card border border-slate-700/50 dark:border-white/10 backdrop-blur-md text-left min-w-[150px]';
+                chart.canvas.parentNode.appendChild(tooltipEl);
+            }
+
+            if (tooltip.opacity === 0) {
+                tooltipEl.style.opacity = '0';
+                return;
+            }
+
+            if (tooltip.body) {
+                const dataIndex = tooltip.dataPoints[0].dataIndex;
+                const dataset = tooltip.dataPoints[0].dataset;
+                const rec = dataset.records ? dataset.records[dataIndex] : null;
+
+                if (rec) {
+                    const dateStr = rec.dateStr;
+                    const totalFormatted = formatNumber(rec.total);
+                    const profitVal = rec.profit || 0;
+                    const pctVal = rec.returnPct || 0;
+
+                    const profitFormatted = formatSignMoney(profitVal);
+                    const pctFormatted = formatSignPct(pctVal);
+
+                    const isPositive = profitVal > 0;
+                    const isNegative = profitVal < 0;
+                    const colorClass = isPositive ? 'text-emerald-400' : (isNegative ? 'text-rose-400' : 'text-slate-300');
+
+                    tooltipEl.innerHTML = `
+                        <div class="text-[10px] text-slate-400 font-semibold mb-0.5">${dateStr}</div>
+                        <div class="flex items-baseline space-x-1">
+                            <span class="text-sm font-black text-white font-num tracking-tight">${totalFormatted}</span>
+                            <span class="text-[10px] font-normal text-slate-400">บาท</span>
+                        </div>
+                        <div class="flex items-baseline justify-start space-x-1 mt-0.5 ${colorClass}">
+                            <span class="text-xs font-bold font-num">${profitFormatted}</span>
+                            <span class="text-[10px] font-semibold font-num">(${pctFormatted})</span>
+                        </div>
+                    `;
+                }
+            }
+
+            const positionY = chart.canvas.offsetTop;
+            const positionX = chart.canvas.offsetLeft;
+            const containerWidth = chart.canvas.offsetWidth;
+            const tooltipWidth = tooltipEl.offsetWidth || 150;
+            const halfWidth = tooltipWidth / 2;
+
+            let leftPos = positionX + tooltip.caretX;
+            const edgePadding = 8;
+            if (leftPos - halfWidth < positionX + edgePadding) {
+                leftPos = positionX + edgePadding + halfWidth;
+            } else if (leftPos + halfWidth > positionX + containerWidth - edgePadding) {
+                leftPos = positionX + containerWidth - edgePadding - halfWidth;
+            }
+
+            tooltipEl.style.opacity = '1';
+            tooltipEl.style.left = leftPos + 'px';
+            tooltipEl.style.top = (positionY + tooltip.caretY - 12) + 'px';
+            tooltipEl.style.transform = 'translate(-50%, -100%)';
+        }
+
+        function renderChart() {
+            if (!chartInstance || rawData.length === 0) return;
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const ctx = document.getElementById('portfolioChart').getContext('2d');
+            
+            // Update gradient dynamically based on theme
+            const gradient = ctx.createLinearGradient(0, 0, 0, 195);
+            if (isDark) {
+                gradient.addColorStop(0, 'rgba(16, 185, 129, 0.35)');
+                gradient.addColorStop(0.6, 'rgba(59, 130, 246, 0.15)');
+                gradient.addColorStop(1, 'rgba(15, 21, 35, 0.0)');
+            } else {
+                gradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+                gradient.addColorStop(0.6, 'rgba(59, 130, 246, 0.1)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+            }
+
+            chartInstance.data.datasets[0].borderColor = isDark ? '#10B981' : '#059669';
+            chartInstance.data.datasets[0].backgroundColor = gradient;
+            chartInstance.data.datasets[0].pointBackgroundColor = isDark ? '#10B981' : '#059669';
+            chartInstance.data.datasets[0].pointBorderColor = isDark ? '#0F1523' : '#FFFFFF';
+            chartInstance.options.scales.x.ticks.color = isDark ? '#94A3B8' : '#64748B';
+
+            const range = document.getElementById('chart-range-select').value;
+            const recordsUpToSelected = rawData.slice(0, selectedIndex + 1);
+            const currentSelectedRec = rawData[selectedIndex];
+            const currentInfo = parseDateInfo(currentSelectedRec.dateStr);
+            const currentYear = currentInfo.year;
+
+            let labels = [];
+            let values = [];
+            let chartRecords = [];
+
+            if (range === '7d') {
+                const last7 = recordsUpToSelected.slice(-7);
+                labels = last7.map(d => {
+                    const info = parseDateInfo(d.dateStr);
+                    return `${info.day} ${info.monthShort}`;
+                });
+                values = last7.map(d => d.total);
+                chartRecords = last7;
+            } 
+            else if (range === 'monthly') {
+                const monthMap = new Map();
+                recordsUpToSelected.forEach(d => {
+                    const info = parseDateInfo(d.dateStr);
+                    const monthVal = info.year * 12 + info.monthIdx;
+                    if (!monthMap.has(monthVal)) {
+                        monthMap.set(monthVal, {
+                            monthVal: monthVal,
+                            year: info.year,
+                            monthIdx: info.monthIdx,
+                            monthShort: info.monthShort,
+                            records: []
+                        });
+                    }
+                    monthMap.get(monthVal).records.push(d);
+                });
+
+                const allMonthsSorted = Array.from(monthMap.values()).sort((a, b) => a.monthVal - b.monthVal);
+                const last12Months = allMonthsSorted.slice(-12);
+
+                labels = last12Months.map(m => m.monthShort);
+                chartRecords = last12Months.map(m => {
+                    const groupRecords = m.records;
+                    const lastRec = groupRecords[groupRecords.length - 1];
+                    const firstRec = groupRecords[0];
+                    const baseRec = firstRec.rawIndex > 0 ? rawData[firstRec.rawIndex - 1] : null;
+                    const mStats = calculatePeriodReturn(lastRec, baseRec);
+
+                    return {
+                        dateStr: lastRec.dateStr,
+                        total: lastRec.total,
+                        profit: mStats.profit,
+                        returnPct: mStats.pct
+                    };
+                });
+                values = chartRecords.map(r => r.total);
+            } 
+            else if (range === 'yearly' || range === 'all') {
+                const minYear = (range === 'yearly') ? (currentYear - 9) : 0;
+                const yearGroupMap = new Map();
+
+                recordsUpToSelected.forEach(d => {
+                    const info = parseDateInfo(d.dateStr);
+                    if (info.year >= minYear && info.year <= currentYear) {
+                        if (!yearGroupMap.has(info.year)) {
+                            yearGroupMap.set(info.year, []);
+                        }
+                        yearGroupMap.get(info.year).push(d);
+                    }
+                });
+
+                const sortedYears = Array.from(yearGroupMap.keys()).sort((a, b) => a - b);
+                labels = sortedYears.map(y => y.toString());
+
+                chartRecords = sortedYears.map(y => {
+                    const groupRecords = yearGroupMap.get(y);
+                    const lastRec = groupRecords[groupRecords.length - 1];
+                    const firstRec = groupRecords[0];
+                    const baseRec = firstRec.rawIndex > 0 ? rawData[firstRec.rawIndex - 1] : null;
+                    const yStats = calculatePeriodReturn(lastRec, baseRec);
+
+                    return {
+                        dateStr: lastRec.dateStr,
+                        total: lastRec.total,
+                        profit: yStats.profit,
+                        returnPct: yStats.pct
+                    };
+                });
+                values = chartRecords.map(r => r.total);
+            }
+
+            chartInstance.data.labels = labels;
+            chartInstance.data.datasets[0].data = values;
+            chartInstance.data.datasets[0].records = chartRecords;
+            chartInstance.update();
+        }
+
+        function updateChartRange() {
+            renderChart();
+            renderPlanBreakdown();
+        }
+
+        function renderPlanBreakdown() {
+            if (!rawData || rawData.length === 0) return;
+
+            const currentRec = rawData[selectedIndex];
+            const planName = currentRec.plan || "แผนการลงทุนตามหลักชะรีอะฮ์";
+            const cardPlanTitle = document.getElementById('card-plan-title');
+            if (cardPlanTitle) {
+                cardPlanTitle.innerText = planName;
+            }
+
+            const range = document.getElementById('chart-range-select') ? document.getElementById('chart-range-select').value : '7d';
+            const recordsUpToSelected = rawData.slice(0, selectedIndex + 1);
+            const currentInfo = parseDateInfo(currentRec.dateStr);
+            const currentYear = currentInfo.year;
+
+            const listContainer = document.getElementById('plan-breakdown-container');
+            if (!listContainer) return;
+
+            let items = [];
+
+            if (range === '7d') {
+                const last7 = recordsUpToSelected.slice(-7);
+                const reversed = [...last7].reverse();
+                items = reversed.map(d => {
+                    const info = parseDateInfo(d.dateStr);
+                    const label = `${info.day} ${THAI_FULL_MONTHS[info.monthIdx]} ${info.year}`;
+                    const profitVal = (d.profit !== undefined && d.profit !== 0) ? d.profit : (d.diff || 0);
+                    const pctVal = d.returnPct || 0;
+                    return { label, profit: profitVal, returnPct: pctVal };
+                });
+            } else if (range === 'monthly') {
+                const monthMap = new Map();
+                recordsUpToSelected.forEach(d => {
+                    const info = parseDateInfo(d.dateStr);
+                    const monthVal = info.year * 12 + info.monthIdx;
+                    if (!monthMap.has(monthVal)) {
+                        monthMap.set(monthVal, {
+                            monthVal: monthVal,
+                            year: info.year,
+                            monthIdx: info.monthIdx,
+                            monthShort: info.monthShort,
+                            records: []
+                        });
+                    }
+                    monthMap.get(monthVal).records.push(d);
+                });
+
+                const allMonthsSorted = Array.from(monthMap.values()).sort((a, b) => a.monthVal - b.monthVal);
+                const last12Months = allMonthsSorted.slice(-12);
+                const monthsDescending = [...last12Months].reverse();
+
+                items = monthsDescending.map(m => {
+                    const recs = m.records;
+                    const lastRec = recs[recs.length - 1];
+                    const firstRec = recs[0];
+                    const baseRec = firstRec.rawIndex > 0 ? rawData[firstRec.rawIndex - 1] : null;
+                    const mStats = calculatePeriodReturn(lastRec, baseRec);
+
+                    return {
+                        label: `${THAI_FULL_MONTHS[m.monthIdx]} ${m.year}`,
+                        profit: mStats.profit,
+                        returnPct: mStats.pct
+                    };
+                });
+            } else if (range === 'yearly' || range === 'all') {
+                const minYear = (range === 'yearly') ? (currentYear - 9) : 0;
+                const yearGroupMap = new Map();
+
+                recordsUpToSelected.forEach(d => {
+                    const info = parseDateInfo(d.dateStr);
+                    if (info.year >= minYear && info.year <= currentYear) {
+                        if (!yearGroupMap.has(info.year)) {
+                            yearGroupMap.set(info.year, []);
+                        }
+                        yearGroupMap.get(info.year).push(d);
+                    }
+                });
+
+                const sortedYears = Array.from(yearGroupMap.keys()).sort((a, b) => b - a);
+                items = sortedYears.map(y => {
+                    const recs = yearGroupMap.get(y);
+                    const lastRec = recs[recs.length - 1];
+                    const firstRec = recs[0];
+                    const baseRec = firstRec.rawIndex > 0 ? rawData[firstRec.rawIndex - 1] : null;
+                    const yStats = calculatePeriodReturn(lastRec, baseRec);
+
+                    return {
+                        label: `ปี ${y}`,
+                        profit: yStats.profit,
+                        returnPct: yStats.pct
+                    };
+                });
+            }
+
+            if (items.length === 0) {
+                listContainer.innerHTML = `<div class="py-8 text-center text-xs text-slate-400 dark:text-slate-500">ไม่มีข้อมูลในช่วงที่เลือก</div>`;
+                return;
+            }
+
+            listContainer.innerHTML = items.map(item => {
+                const formattedProfit = formatSignMoney(item.profit);
+                const formattedPct = formatSignPct(item.returnPct);
+
+                const isPositive = item.profit > 0;
+                const isNegative = item.profit < 0;
+                const profitClass = isPositive ? 'text-emerald-600 dark:text-emerald-400' : (isNegative ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400');
+                const pctClass = isPositive ? 'text-emerald-600 dark:text-emerald-400' : (isNegative ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400');
+
+                return `
+                    <div class="flex items-center justify-between py-3 px-2 hover:bg-slate-100/70 dark:hover:bg-white/[0.02] transition-colors rounded-xl text-xs sm:text-sm">
+                        <div class="w-[45%] font-medium text-slate-700 dark:text-slate-200 truncate flex items-center space-x-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full ${isPositive ? 'bg-emerald-500 dark:bg-emerald-400' : (isNegative ? 'bg-rose-500' : 'bg-slate-400')}"></span>
+                            <span>${item.label}</span>
+                        </div>
+                        <div class="w-[28%] font-bold text-right font-num ${profitClass}">${formattedProfit}</div>
+                        <div class="w-[27%] font-bold text-right font-num ${pctClass}">${formattedPct}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showToast(message, type = "info") {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.innerText = message;
+            if (type === "success") {
+                toastIcon.className = "fa-solid fa-circle-check text-emerald-400";
+            } else {
+                toastIcon.className = "fa-solid fa-circle-info text-blue-400";
+            }
+
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        function openDetailsModal() {
+            renderDetailsModalTable();
+            const modal = document.getElementById('details-modal');
+            const modalContent = document.getElementById('details-modal-content');
+            if (modal && modalContent) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                modal.classList.add('opacity-100');
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }
+        }
+
+        function closeDetailsModal() {
+            const modal = document.getElementById('details-modal');
+            const modalContent = document.getElementById('details-modal-content');
+            if (modal && modalContent) {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                modalContent.classList.remove('scale-100');
+                modalContent.classList.add('scale-95');
+            }
+        }
+
+        function renderDetailsModalTable() {
+            const tbody = document.getElementById('details-table-body');
+            if (!tbody || !rawData || rawData.length === 0) return;
+
+            const sortedData = [...rawData].reverse();
+
+            tbody.innerHTML = sortedData.map(item => {
+                const profitVal = item.profit || 0;
+                const returnPctVal = item.returnPct || 0;
+
+                const isPositive = profitVal > 0;
+                const isNegative = profitVal < 0;
+                const profitClass = isPositive ? 'text-emerald-600 dark:text-emerald-400' : (isNegative ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400');
+                const profitFormatted = formatSignMoney(profitVal);
+                const returnPctFormatted = formatSignPct(returnPctVal);
+
+                const dateInfo = parseDateInfo(item.dateStr);
+                const shortDateStr = dateInfo.monthShort ? `${dateInfo.day} ${dateInfo.monthShort} ${dateInfo.year}` : item.dateStr;
+
+                return `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
+                        <td class="py-3 px-2 font-medium text-slate-600 dark:text-slate-300 text-center truncate">${shortDateStr}</td>
+                        <td class="py-3 px-2 font-bold text-slate-900 dark:text-white text-right font-num truncate">${formatNumber(item.total)}</td>
+                        <td class="py-3 px-2 font-semibold text-right font-num ${profitClass} truncate">
+                            <div>${profitFormatted}</div>
+                            <div class="text-[10px] font-normal opacity-85">(${returnPctFormatted})</div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openCalendarModal() {
+            if (!rawData || rawData.length === 0) return;
+            const currentRec = rawData[selectedIndex];
+            const dateInfo = parseDateInfo(currentRec.dateStr);
+            calViewYear = dateInfo.year;
+            calViewMonth = dateInfo.monthIdx;
+
+            renderCalendarModal();
+
+            const modal = document.getElementById('calendar-modal');
+            const modalContent = document.getElementById('calendar-modal-content');
+            if (modal && modalContent) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                modal.classList.add('opacity-100');
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }
+        }
+
+        function closeCalendarModal() {
+            const modal = document.getElementById('calendar-modal');
+            const modalContent = document.getElementById('calendar-modal-content');
+            if (modal && modalContent) {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                modalContent.classList.remove('scale-100');
+                modalContent.classList.add('scale-95');
+            }
+        }
+
+        function changeCalendarMonth(delta) {
+            calViewMonth += delta;
+            if (calViewMonth > 11) {
+                calViewMonth = 0;
+                calViewYear += 1;
+            } else if (calViewMonth < 0) {
+                calViewMonth = 11;
+                calViewYear -= 1;
+            }
+            renderCalendarModal();
+        }
+
+        function goToLatestDate() {
+            if (!rawData || rawData.length === 0) return;
+            selectedIndex = rawData.length - 1;
+            updateDashboard();
+            closeCalendarModal();
+            showToast("ไปยังวันที่ล่าสุดแล้ว", "success");
+        }
+
+        function findRecordIndex(day, monthIdx, year) {
+            if (!rawData) return -1;
+            return rawData.findIndex(r => {
+                const info = parseDateInfo(r.dateStr);
+                return info.day === day && info.monthIdx === monthIdx && info.year === year;
+            });
+        }
+
+        function renderCalendarModal() {
+            const titleEl = document.getElementById('calendar-month-year-title');
+            const gridEl = document.getElementById('calendar-days-grid');
+            if (!titleEl || !gridEl) return;
+
+            titleEl.innerText = `${THAI_FULL_MONTHS[calViewMonth]} ${calViewYear}`;
+
+            const gregorianYear = calViewYear > 2400 ? calViewYear - 543 : calViewYear;
+            const firstDayObj = new Date(gregorianYear, calViewMonth, 1);
+            const firstDayIndex = firstDayObj.getDay(); 
+            const daysInMonth = new Date(gregorianYear, calViewMonth + 1, 0).getDate();
+
+            const currentSelectedRec = rawData[selectedIndex];
+            const selectedInfo = parseDateInfo(currentSelectedRec ? currentSelectedRec.dateStr : '');
+
+            const latestRec = rawData.length > 0 ? rawData[rawData.length - 1] : null;
+            const latestInfo = latestRec ? parseDateInfo(latestRec.dateStr) : null;
+
+            let html = '';
+            for (let i = 0; i < firstDayIndex; i++) {
+                html += `<div class="h-9 w-9"></div>`;
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const recIdx = findRecordIndex(d, calViewMonth, calViewYear);
+                const hasData = recIdx !== -1;
+                const rec = hasData ? rawData[recIdx] : null;
+                const isSelected = selectedInfo.day === d && selectedInfo.monthIdx === calViewMonth && selectedInfo.year === calViewYear;
+                const isLatest = latestInfo && latestInfo.day === d && latestInfo.monthIdx === calViewMonth && latestInfo.year === calViewYear;
+
+                let btnClasses = "w-9 h-9 mx-auto rounded-xl flex flex-col items-center justify-center relative transition-all duration-150 ";
+                let textClasses = "text-xs font-num ";
+
+                if (isSelected) {
+                    btnClasses += "bg-blue-600 text-white cursor-pointer shadow-lg shadow-blue-600/40 ring-2 ring-blue-400";
+                    textClasses += "font-black";
+                } else if (hasData) {
+                    btnClasses += "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-white/5";
+                    textClasses += isLatest ? "text-blue-600 dark:text-blue-400 font-bold" : "font-medium";
+                } else {
+                    btnClasses += "cursor-default select-none text-slate-300 dark:text-slate-600";
+                    textClasses += "font-normal";
+                }
+
+                let dotIndicator = '';
+                if (hasData && !isSelected) {
+                    const isProfit = rec && (rec.profit >= 0);
+                    const dotColor = isProfit ? 'bg-emerald-500 dark:bg-emerald-400 shadow-neon-green' : 'bg-rose-500 shadow-neon-rose';
+                    dotIndicator = `<span class="w-1.5 h-1.5 ${dotColor} rounded-full absolute bottom-1 shadow-sm"></span>`;
+                }
+
+                const clickHandler = hasData ? 
+                    `onclick="selectDateFromCalendar(${recIdx})"` : 
+                    `onclick="showToast('ไม่มีข้อมูลในวันที่เลือก', 'info')"`;
+
+                html += `
+                    <div ${clickHandler} class="${btnClasses}">
+                        <span class="${textClasses}">${d}</span>
+                        ${dotIndicator}
+                    </div>
+                `;
+            }
+
+            gridEl.innerHTML = html;
+        }
+
+        function selectDateFromCalendar(index) {
+            if (index >= 0 && index < rawData.length) {
+                selectedIndex = index;
+                updateDashboard();
+                closeCalendarModal();
+                showToast(`โหลดข้อมูลวันที่ ${rawData[selectedIndex].dateStr} เรียบร้อยแล้ว`, "success");
+            }
+        }
+    </script>
+</body>
+</html>
