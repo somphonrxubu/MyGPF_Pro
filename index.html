@@ -219,6 +219,14 @@
             height: 195px;
         }
 
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+        }
+        .animate-shimmer {
+            animation: shimmer 1.8s infinite linear;
+        }
+
         @keyframes pulseGlow {
             0%, 100% { opacity: 0.35; transform: scale(1); filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.4)); }
             50% { opacity: 0.85; transform: scale(1.05); filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.8)); }
@@ -283,10 +291,10 @@
     <div id="ios-status-bar-fill" class="ios-status-fill bg-white dark:bg-[#0D121F]"></div>
 
     <!-- WELCOME LOADING SCREEN -->
-    <div id="loading-screen" class="fixed inset-0 bg-slate-50 dark:bg-[#080C14] z-[9999] flex flex-col items-center justify-center transition-all duration-700 ease-in-out p-6">
+    <div id="loading-screen" class="fixed inset-0 bg-slate-50 dark:bg-[#080C14] z-[9999] flex flex-col items-center justify-center p-6 backdrop-blur-md transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]">
         <div class="relative flex flex-col items-center max-w-xs w-full text-center">
             
-            <div class="absolute -top-12 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -top-12 w-52 h-52 bg-gradient-to-tr from-blue-500/15 via-teal-400/10 to-emerald-500/15 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
 
             <div class="relative flex items-center justify-center mb-6">
                 <div class="w-24 h-24 rounded-3xl p-[1px] bg-gradient-to-tr from-blue-600 via-indigo-500 to-teal-400 animate-pulse-glow shadow-neon-blue">
@@ -302,13 +310,20 @@
             <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">
                 MY <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-teal-500 to-emerald-500 dark:from-blue-400 dark:via-teal-300 dark:to-emerald-400 font-black">GPF</span>
             </h1>
-            <p class="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 font-medium mb-5">Wealth & Portfolio Terminal</p>
+            <p class="text-[11px] uppercase tracking-widest text-slate-400 dark:text-slate-400 font-semibold mb-6">Wealth & Portfolio Terminal</p>
 
-            <div class="w-full bg-slate-200 dark:bg-slate-800/60 rounded-full h-1.5 overflow-hidden relative border border-slate-300/50 dark:border-slate-700/50 mb-3">
-                <div id="loading-progress-bar" class="bg-gradient-to-r from-blue-500 via-teal-400 to-emerald-400 h-full rounded-full transition-all duration-500 ease-out w-[15%] shadow-neon-blue"></div>
+            <!-- Ultra-Smooth Progress Track with Shimmer -->
+            <div class="w-full max-w-[220px] bg-slate-200/90 dark:bg-slate-800/80 rounded-full h-1.5 overflow-hidden relative border border-slate-300/40 dark:border-white/5 mb-3.5 shadow-inner">
+                <div id="loading-progress-bar" class="bg-gradient-to-r from-blue-500 via-teal-400 to-emerald-400 h-full rounded-full transition-all duration-500 ease-out w-[5%] shadow-neon-blue relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-full animate-shimmer pointer-events-none"></div>
+                </div>
             </div>
 
-            <p id="loading-status-text" class="text-xs text-slate-500 dark:text-slate-400 font-medium transition-all duration-300">กำลังโหลดข้อมูลพอร์ตของคุณ...</p>
+            <!-- Status Description and Percentage Indicator -->
+            <div class="flex items-center justify-center space-x-2 text-xs font-medium min-h-[1.5rem]">
+                <p id="loading-status-text" class="text-slate-500 dark:text-slate-400 transition-opacity duration-300">กำลังโหลดข้อมูลพอร์ตของคุณ...</p>
+                <span id="loading-percent-text" class="font-num text-[11px] text-blue-600 dark:text-blue-400 font-bold">0%</span>
+            </div>
 
             <div id="loading-retry-container" class="hidden pt-4">
                 <button onclick="retryFetchData()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/30 transition-all flex items-center space-x-2 mx-auto active:scale-95">
@@ -319,7 +334,7 @@
         </div>
     </div>
 
-    <main id="app-container" class="w-full max-w-md bg-white dark:bg-[#0D121F] min-h-screen sm:min-h-0 sm:rounded-[36px] shadow-xl dark:shadow-fintech-card overflow-hidden flex flex-col justify-between border-0 sm:border border-slate-200/80 dark:border-fintech-border relative transition-colors duration-400">
+    <main id="app-container" class="w-full max-w-md bg-white dark:bg-[#0D121F] min-h-screen sm:min-h-0 sm:rounded-[36px] shadow-xl dark:shadow-fintech-card overflow-hidden flex flex-col justify-between border-0 sm:border border-slate-200/80 dark:border-fintech-border relative transition-all duration-500 opacity-100">
 
         <!-- Top Header & Hero Balance Container (Crisp, perfectly padded for iOS Safe Area) -->
         <header class="p-4 sm:p-5 pb-4 relative z-10 bg-white dark:bg-[#0D121F] transition-colors duration-400" style="padding-top: max(0.75rem, calc(env(safe-area-inset-top, 0px) + 0.5rem));">
@@ -368,7 +383,7 @@
                 <!-- Card Header: Title & Quick Utility Controls with Theme Switcher -->
                 <div class="flex justify-between items-center mb-2">
                     <div class="flex items-center space-x-1.5 sm:space-x-2">
-                        <span class="text-xs text-slate-600 dark:text-slate-300 font-medium tracking-wide">มูลค่าพอร์ตรวม</span>
+                        <span class="text-xs text-slate-600 dark:text-slate-300 font-medium tracking-wide">มูลค่าพอร์ตสะสม</span>
                         
                         <!-- Day / Night Mode Auto Switcher Button -->
                         <button id="btn-theme-mode" onclick="cycleThemeMode()" class="h-7 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center space-x-1 border border-slate-200/80 dark:border-white/5 text-[11px] font-semibold" title="โหมดกลางวัน/กลางคืน (อัตโนมัติตามเวลา)">
@@ -377,7 +392,7 @@
                         </button>
 
                         <!-- Push Notification Bell -->
-                        <button id="btn-notification" onclick="togglePushNotificationPermission()" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center justify-center border border-slate-200/80 dark:border-white/5 relative" title="ตั้งค่าการแจ้งเตือน iPhone">
+                        <button id="btn-notification" onclick="togglePushNotificationPermission()" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center justify-center border border-slate-200/80 dark:border-white/5 relative" title="ตั้งค่าการแจ้งเตือน">
                             <i id="bell-icon" class="fa-regular fa-bell text-xs"></i>
                         </button>
                     </div>
@@ -446,8 +461,7 @@
 
             <div class="flex justify-between items-center mb-2.5">
                 <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-chart-area text-blue-600 dark:text-blue-400 text-xs"></i>
-                    <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">แนวโน้มพอร์ต</span>
+                    <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">แนวโน้มพอร์ตของคุณ</span>
                 </div>
                 
                 <div class="relative">
@@ -477,7 +491,7 @@
                             แผนการลงทุนตามหลักชะรีอะฮ์
                         </h3>
                     </div>
-                    <button onclick="openDetailsModal()" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors flex items-center space-x-1.5 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1 rounded-full border border-blue-500/20 cursor-pointer" title="ดูรายละเอียด">
+                    <button onclick="openDetailsModal()" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors flex items-center space-x-1.5 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1 rounded-full border border-blue-500/20 cursor-pointer" title="คลิกเพื่อดูรายละเอียด">
                         <span>ดูรายละเอียด</span>
                         <i class="fa-solid fa-chevron-right text-[10px]"></i>
                     </button>
@@ -497,10 +511,10 @@
 
             <!-- Footer Badge -->
             <div class="pt-3 mt-2 border-t border-slate-200 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
-                <span>My GPF Pro v1.0</span>
+                <span>My GPF PRO</span>
                 <span class="flex items-center space-x-1">
                     <i class="fa-solid fa-shield-halved text-emerald-500/80"></i>
-                    <span>ข้อมูลปลอดภัย</span>
+                    <span>ปลอดภัย</span>
                 </span>
             </div>
         </section>
@@ -514,8 +528,8 @@
                             <i class="fa-solid fa-list-check text-xs"></i>
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-wide">รายละเอียดผลตอบแทน</h3>
-                            <p class="text-[10px] text-slate-500 dark:text-slate-400">ข้อมูลย้อนหลังจาก กบข.</p>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-wide">รายละเอียดผลตอบแทนจาก กบข.</h3>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">ข้อมูลย้อนหลังตั้งแต่เริ่มนำส่งจนถึงปัจจุบัน</p>
                         </div>
                     </div>
                     <button onclick="closeDetailsModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors">
@@ -579,7 +593,7 @@
                     </div>
                     <button onclick="goToLatestDate()" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors flex items-center space-x-1.5 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-full border border-blue-500/25">
                         <i class="fa-solid fa-clock-rotate-left text-[11px]"></i>
-                        <span>วันล่าสุด</span>
+                        <span>ไปยังวันที่ล่าสุด</span>
                     </button>
                 </div>
             </div>
@@ -839,14 +853,14 @@
         function cycleThemeMode() {
             if (currentThemeSetting === 'auto') {
                 currentThemeSetting = 'light';
-                showToast("เปลี่ยนเป็นโหมดกลางวัน ☀️", "info");
+                showToast("โหมดกลางวัน ☀️", "info");
             } else if (currentThemeSetting === 'light') {
                 currentThemeSetting = 'dark';
-                showToast("เปลี่ยนเป็นโหมดกลางคืน 🌙", "info");
+                showToast("โหมดกลางคืน 🌙", "info");
             } else {
                 currentThemeSetting = 'auto';
                 const status = isDaytime() ? "กลางวัน ☀️" : "กลางคืน 🌙";
-                showToast(`โหมดอัตโนมัติตามเวลา (ขณะนี้: ${status})`, "success");
+                showToast(`อัตโนมัติ (${status})`, "success");
             }
 
             try {
@@ -870,15 +884,15 @@
                     `fa-solid fa-moon ${iconNeutralColor} text-[11px]` : 
                     `fa-solid fa-sun ${iconNeutralColor} text-[11px]`;
                 if (text) text.innerText = isCurrentlyDark ? "Auto 🌙" : "Auto ☀️";
-                btn.title = `โหมดอัตโนมัติ (ปัจจุบัน: ${isCurrentlyDark ? 'กลางคืน' : 'กลางวัน'}) - คลิกเพื่อเปลี่ยน`;
+                btn.title = `โหมดอัตโนมัติ (${isCurrentlyDark ? 'กลางคืน' : 'กลางวัน'}) - คลิกเพื่อเปลี่ยน`;
             } else if (mode === 'light') {
                 icon.className = `fa-solid fa-sun ${iconNeutralColor} text-[11px]`;
                 if (text) text.innerText = "Day ☀️";
-                btn.title = "โหมดกลางวัน (Light) - คลิกเพื่อเปลี่ยน";
+                btn.title = "โหมดกลางวัน - คลิกเพื่อเปลี่ยน";
             } else {
                 icon.className = `fa-solid fa-moon ${iconNeutralColor} text-[11px]`;
                 if (text) text.innerText = "Night 🌙";
-                btn.title = "โหมดกลางคืน (Dark) - คลิกเพื่อเปลี่ยน";
+                btn.title = "โหมดกลางคืน - คลิกเพื่อเปลี่ยน";
             }
         }
 
@@ -984,18 +998,65 @@
             }
         }
 
+        let currentDisplayProgress = 0;
+        let progressAnimFrameId = null;
+
+        function setSmoothProgress(targetPct, statusText) {
+            const bar = document.getElementById('loading-progress-bar');
+            const pctText = document.getElementById('loading-percent-text');
+            const statusEl = document.getElementById('loading-status-text');
+
+            if (statusText && statusEl && statusEl.innerText !== statusText) {
+                statusEl.style.opacity = '0';
+                setTimeout(() => {
+                    statusEl.innerText = statusText;
+                    statusEl.style.opacity = '1';
+                }, 150);
+            }
+
+            const startPct = currentDisplayProgress;
+            const duration = 500;
+            const startTime = performance.now();
+
+            if (progressAnimFrameId) cancelAnimationFrame(progressAnimFrameId);
+
+            function step(now) {
+                const elapsed = now - startTime;
+                const factor = Math.min(elapsed / duration, 1);
+                // Ease-out cubic easing for velvety movement
+                const ease = 1 - Math.pow(1 - factor, 3);
+                currentDisplayProgress = startPct + (targetPct - startPct) * ease;
+
+                if (bar) bar.style.width = `${currentDisplayProgress}%`;
+                if (pctText) pctText.innerText = `${Math.round(currentDisplayProgress)}%`;
+
+                if (factor < 1) {
+                    progressAnimFrameId = requestAnimationFrame(step);
+                }
+            }
+            progressAnimFrameId = requestAnimationFrame(step);
+        }
+
         async function handleInitialDataLoad() {
-            setLoadingStatus("กำลังโหลดข้อมูลพอร์ตของคุณ...", 25);
+            const startTime = Date.now();
+            setSmoothProgress(18, "กำลังโหลดข้อมูลพอร์ตของคุณ...");
 
             try {
-                setLoadingStatus("กำลังโหลดข้อมูลพอร์ตของคุณ...", 50);
-                const csvText = await fetchSheetCSV();
+                // Fetch Google Sheets concurrently
+                const fetchPromise = fetchSheetCSV();
+
+                await sleep(350);
+                setSmoothProgress(45, "กำลังโหลดข้อมูลพอร์ตของคุณ...");
+
+                const csvText = await fetchPromise;
 
                 if (!csvText || typeof csvText !== 'string' || csvText.trim() === '') {
                     throw new Error("ลองใหม่อีกครั้ง");
                 }
 
-                setLoadingStatus("กำลังโหลดข้อมูลพอร์ตของคุณ...", 75);
+                await sleep(300);
+                setSmoothProgress(78, "กำลังโหลดข้อมูลพอร์ตของคุณ...");
+
                 const parsed = parseCSVData(csvText);
 
                 if (!parsed || parsed.length === 0) {
@@ -1005,10 +1066,17 @@
                 rawData = parsed;
                 selectedIndex = rawData.length - 1;
 
-                setLoadingStatus("พอร์ตของคุณพร้อมใช้งานแล้ว", 100);
+                // Pre-render the dashboard in background
                 updateDashboard();
 
-                await sleep(400);
+                await sleep(250);
+                setSmoothProgress(100, "พอร์ตของคุณพร้อมใช้งานแล้ว");
+
+                // Guarantee a smooth minimum duration (1.4 - 1.6s) to avoid jarring quick flashes
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(400, 1500 - elapsed);
+                await sleep(remaining);
+
                 hideLoadingScreen();
             } catch (err) {
                 console.error("Critical Google Sheets fetch error:", err);
@@ -1074,10 +1142,12 @@
 
         function showLoadingError(msg) {
             const statusEl = document.getElementById('loading-status-text');
+            const pctText = document.getElementById('loading-percent-text');
             if (statusEl) {
                 statusEl.innerText = msg;
                 statusEl.classList.add('text-rose-500', 'dark:text-rose-400');
             }
+            if (pctText) pctText.innerText = '!';
             const bar = document.getElementById('loading-progress-bar');
             if (bar) {
                 bar.classList.remove('from-blue-500', 'via-teal-400', 'to-emerald-400');
@@ -1091,10 +1161,16 @@
         function hideLoadingScreen() {
             const screen = document.getElementById('loading-screen');
             if (!screen) return;
-            screen.classList.add('opacity-0', 'pointer-events-none', 'scale-105');
+            
+            screen.style.transition = 'opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), filter 0.75s cubic-bezier(0.16, 1, 0.3, 1)';
+            screen.style.opacity = '0';
+            screen.style.filter = 'blur(6px)';
+            screen.style.transform = 'scale(1.03)';
+            screen.style.pointerEvents = 'none';
+
             setTimeout(() => {
                 screen.style.display = 'none';
-            }, 700);
+            }, 750);
         }
 
         async function retryFetchData() {
@@ -1108,9 +1184,10 @@
 
             const bar = document.getElementById('loading-progress-bar');
             if (bar) {
-                bar.className = "bg-gradient-to-r from-blue-500 via-teal-400 to-emerald-400 h-full rounded-full transition-all duration-500 ease-out w-[15%] shadow-neon-blue";
+                bar.className = "bg-gradient-to-r from-blue-500 via-teal-400 to-emerald-400 h-full rounded-full transition-all duration-500 ease-out w-[5%] shadow-neon-blue relative overflow-hidden";
             }
 
+            currentDisplayProgress = 0;
             await handleInitialDataLoad();
         }
 
@@ -1833,7 +1910,7 @@
                     chartInstance.options.scales.x.ticks.callback = function(val) {
                         return this.getLabelForValue(val);
                     };
-                    chartInstance.options.scales.x.ticks.font = { size: 9.5, family: 'Prompt', weight: '500' };
+                    chartInstance.options.scales.x.ticks.font = { size: 9, family: 'Prompt', weight: '500' };
                     chartInstance.options.scales.x.ticks.maxRotation = 0;
                     chartInstance.options.scales.x.ticks.minRotation = 0;
                     chartInstance.data.datasets[0].pointRadius = 3.5;
@@ -2181,7 +2258,7 @@
                 selectedIndex = index;
                 updateDashboard();
                 closeCalendarModal();
-                showToast(`โหลดข้อมูลวันที่ ${rawData[selectedIndex].dateStr} เรียบร้อยแล้ว`, "success");
+                showToast(`วันที่ ${rawData[selectedIndex].dateStr}`, "success");
             }
         }
     </script>
