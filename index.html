@@ -418,9 +418,14 @@
                     <span id="total-portfolio-value-dec" class="text-xl font-bold text-slate-500 dark:text-slate-400 font-num inline-flex items-baseline"></span>
                 </div>
 
-                <div class="flex items-center space-x-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
-                    <span>รวมเงินต้นและผลประโยชน์</span>
+                <div class="flex items-center space-x-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <span id="accum-profit-dot" class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shrink-0"></span>
+                    <div id="accum-profit-display" class="truncate font-medium flex items-baseline space-x-1">
+                        <span>กำไรสะสม</span>
+                        <span id="accum-profit-val" class="font-num font-bold inline-flex items-baseline"></span>
+                        <span>บาท</span>
+                        <span>(</span><span id="accum-profit-pct" class="font-num font-semibold inline-flex items-baseline"></span><span>)</span>
+                    </div>
                 </div>
             </div>
 
@@ -541,7 +546,7 @@
                         <thead class="sticky top-0 bg-white dark:bg-[#0F1523] z-10">
                             <tr class="text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
                                 <th class="py-2.5 px-2 font-semibold text-center w-[30%]">วันที่</th>
-                                <th class="py-2.5 px-2 font-semibold text-right w-[35%]">มูลค่าพอร์ตรวม</th>
+                                <th class="py-2.5 px-2 font-semibold text-right w-[35%]">มูลค่าพอร์ตสะสม</th>
                                 <th class="py-2.5 px-2 font-semibold text-right w-[35%]">ผลตอบแทน (%)</th>
                             </tr>
                         </thead>
@@ -1366,6 +1371,56 @@
             // Rolling reel animation for the Total Portfolio Value Card
             rollSlotNumber(document.getElementById('total-portfolio-value-main'), parts.main);
             rollSlotNumber(document.getElementById('total-portfolio-value-dec'), '.' + parts.dec);
+
+            // คำนวณกำไรสะสมจากผลรวม Column H (กำไร/ขาดทุน) ตั้งแต่เริ่มต้นจนถึงวันที่เลือก
+            let accumProfit = 0;
+            for (let i = 0; i <= selectedIndex; i++) {
+                accumProfit += (rawData[i].profit || 0);
+            }
+            if (accumProfit === 0 && currentData.returnAccum) {
+                accumProfit = currentData.returnAccum;
+            }
+
+            // คำนวณ % ผลตอบแทน ตามหลักการเดียวกันกับช่องอื่นๆ (เทียบกับต้นทุนเงินต้นสะสม)
+            const curPrincipal = currentData.principal !== undefined ? currentData.principal : 0;
+            const baseCost = curPrincipal > 0 ? curPrincipal : (currentData.total - accumProfit);
+            const accumPct = baseCost > 0 ? (accumProfit / baseCost) * 100 : 0;
+
+            const isPositive = accumProfit >= 0;
+            const signMoney = isPositive ? '+' : '-';
+            const signPct = accumPct >= 0 ? '+' : '-';
+            const formattedProfitStr = `${signMoney}${formatNumber(Math.abs(accumProfit))}`;
+            const formattedPctStr = `${signPct}${Math.abs(accumPct).toFixed(2)}%`;
+
+            const accumProfitVal = document.getElementById('accum-profit-val');
+            const accumProfitPct = document.getElementById('accum-profit-pct');
+            const accumProfitDot = document.getElementById('accum-profit-dot');
+
+            const removeClasses = ['text-emerald-600', 'dark:text-emerald-400', 'text-rose-600', 'dark:text-rose-400'];
+
+            if (accumProfitVal) {
+                accumProfitVal.classList.remove(...removeClasses);
+                if (isPositive) {
+                    accumProfitVal.classList.add('text-emerald-600', 'dark:text-emerald-400');
+                } else {
+                    accumProfitVal.classList.add('text-rose-600', 'dark:text-rose-400');
+                }
+                rollSlotNumber(accumProfitVal, formattedProfitStr);
+            }
+
+            if (accumProfitPct) {
+                accumProfitPct.classList.remove(...removeClasses);
+                if (isPositive) {
+                    accumProfitPct.classList.add('text-emerald-600', 'dark:text-emerald-400');
+                } else {
+                    accumProfitPct.classList.add('text-rose-600', 'dark:text-rose-400');
+                }
+                rollSlotNumber(accumProfitPct, formattedPctStr);
+            }
+
+            if (accumProfitDot) {
+                accumProfitDot.className = `w-2 h-2 rounded-full ${isPositive ? 'bg-emerald-500 dark:bg-emerald-400 shadow-neon-green' : 'bg-rose-500 shadow-neon-rose'} animate-pulse shrink-0`;
+            }
 
             // 1. วันนี้
             const todayProfit = (currentData.profit !== undefined && currentData.profit !== 0) ? currentData.profit : currentData.diff;
