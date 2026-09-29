@@ -464,6 +464,42 @@
                 </div>
             </div>
 
+            <!-- Average Annual Return (IRR) Card - Official GPF Standard -->
+            <div class="glass-panel rounded-2xl p-3.5 mb-4 shadow-sm border border-slate-200/80 dark:border-white/5 relative overflow-hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-1.5">
+                        <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">อัตราผลตอบแทนเฉลี่ยต่อปี (IRR)</span>
+                    </div>
+                    <button onclick="openIrrInfoModal()" class="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition-colors" title="คำอธิบายการคำนวณ IRR">
+                        <i class="fa-solid fa-circle-info text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5 pt-0.5">
+                    <!-- 5 ปีย้อนหลัง -->
+                    <div class="bg-slate-50/90 dark:bg-slate-800/40 rounded-xl p-2.5 border border-slate-200/60 dark:border-white/5">
+                        <div class="text-[10px] text-slate-500 dark:text-slate-400 font-medium mb-0.5">5 ปีย้อนหลัง</div>
+                        <div class="flex items-baseline space-x-0.5">
+                            <span id="irr-5y-val" class="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 font-num tracking-tight inline-flex items-baseline">-</span>
+                            <span class="text-[10px] text-slate-400 font-medium ml-1">ต่อปี</span>
+                        </div>
+                    </div>
+
+                    <!-- ตั้งแต่เริ่มนำส่ง -->
+                    <div class="bg-slate-50/90 dark:bg-slate-800/40 rounded-xl p-2.5 border border-slate-200/60 dark:border-white/5">
+                        <div class="text-[10px] text-slate-500 dark:text-slate-400 font-medium mb-0.5">ตั้งแต่เริ่มนำส่ง</div>
+                        <div class="flex items-baseline space-x-0.5">
+                            <span id="irr-all-val" class="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 font-num tracking-tight inline-flex items-baseline">-</span>
+                            <span class="text-[10px] text-slate-400 font-medium ml-1">ต่อปี</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-2 text-[10px] text-slate-400 dark:text-slate-500 flex items-center justify-between">
+                    <span id="irr-calc-date-note">อัปเดตทุกวันเสาร์ (ข้อมูลย้อนหลัง 3 วันทำการ)</span>
+                </div>
+            </div>
+
             <div class="flex justify-between items-center mb-2.5">
                 <div class="flex items-center space-x-2">
                     <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">แนวโน้มพอร์ตของคุณ</span>
@@ -671,6 +707,41 @@
             </div>
         </div>
 
+        <!-- IRR Information Explanation Modal -->
+        <div id="irr-info-modal" onclick="if(event.target===this) closeIrrInfoModal()" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-md z-50 flex items-start justify-center p-4 opacity-0 pointer-events-none transition-all duration-300 overflow-y-auto" style="padding-top: max(1.25rem, calc(env(safe-area-inset-top, 0px) + 0.75rem));">
+            <div id="irr-info-modal-content" class="bg-white dark:bg-[#12192A] text-slate-900 dark:text-white rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-sm p-5 space-y-4 transform scale-95 transition-all duration-300">
+                <div class="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-3">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-9 h-9 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm font-bold">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 dark:text-white text-sm">การคำนวณอัตราผลตอบแทนเฉลี่ย</h4>
+                            <p class="text-[10px] text-slate-400">มาตรฐานระบบ กบข. (IRR)</p>
+                        </div>
+                    </div>
+                    <button onclick="closeIrrInfoModal()" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white flex items-center justify-center">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <div class="flex items-start space-x-2.5">
+                        <i class="fa-solid fa-circle-check text-blue-500 text-xs mt-1 shrink-0"></i>
+                        <span><b>อัตราผลตอบแทนเฉลี่ยต่อปี:</b> ใช้วิธีการคำนวณแบบ <b>Internal Rate of Return (IRR)</b> เพื่อหาอัตราผลตอบแทนเฉลี่ยของเงินลงทุนในช่วงเวลาที่กำหนด (พิจารณาช่วงเวลาและจำนวนเงินนำส่งจริงในแต่ละงวด)</span>
+                    </div>
+                    <div class="flex items-start space-x-2.5">
+                        <i class="fa-solid fa-calendar-check text-emerald-500 text-xs mt-1 shrink-0"></i>
+                        <span><b>รอบการคำนวณ:</b> คำนวณทุกวันเสาร์ของสัปดาห์ โดยคำนวณจากยอดเงิน <b>3 วันทำการก่อนวันที่คำนวณ</b> (ตามรอบการประกาศ NAV ของ กบข.)</span>
+                    </div>
+                </div>
+
+                <button onclick="closeIrrInfoModal()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 font-semibold text-xs rounded-xl shadow-lg shadow-blue-600/30 text-white transition-all active:scale-95">
+                    เข้าใจแล้ว
+                </button>
+            </div>
+        </div>
+
         <!-- Toast Floating Notification -->
         <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 dark:bg-[#0F1523]/95 backdrop-blur-md text-white text-xs px-4 py-2.5 rounded-full shadow-2xl opacity-0 pointer-events-none transition-all duration-300 border border-white/10 z-50 flex items-center space-x-2.5">
             <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
@@ -709,7 +780,7 @@
         // ==========================================
         // Gaming Slot Reel Rolling Animation Engine
         // ==========================================
-        function rollSlotNumber(container, text) {
+        function rollSlotNumber(container, text, baseDelay = 0) {
             if (!container) return;
             const str = String(text);
             
@@ -752,9 +823,9 @@
                     const totalItems = spinRounds + 1;
                     strip.style.transform = 'translateY(0)';
                     
-                    // Progressive easing curve simulating gaming reels
-                    const duration = 0.95 + (idx * 0.05);
-                    const delay = idx * 35;
+                    // Progressive easing curve simulating gaming reels with cascade delay
+                    const duration = 0.9 + (idx * 0.04);
+                    const delay = baseDelay + (idx * 28);
                     strip.style.transition = `transform ${duration}s cubic-bezier(0.14, 1, 0.28, 1) ${delay}ms`;
 
                     charBox.appendChild(strip);
@@ -770,6 +841,7 @@
                     staticChar.className = 'inline-block select-none';
                     staticChar.style.height = '1.2em';
                     staticChar.style.lineHeight = '1.2em';
+                    staticChar.style.verticalAlign = '-0.12em';
                     staticChar.textContent = char;
                     container.appendChild(staticChar);
                 }
@@ -1442,6 +1514,10 @@
             document.getElementById('profit-year-label').innerText = `กำไรปี ${currentYear || '2569'}`;
             renderMetric('profit-year-amount', 'profit-year-pct', yearStats.profit, yearStats.pct, true);
 
+            // 3. คำนวณอัตราผลตอบแทนเฉลี่ยต่อปีแบบ IRR (5 ปีย้อนหลัง & ตั้งแต่เริ่มนำส่ง)
+            const irrMetrics = calculateGpfIrrMetrics(selectedIndex);
+            renderIrrMetrics(irrMetrics);
+
             renderPlanBreakdown();
             renderChart();
         }
@@ -1559,6 +1635,271 @@
         function formatSignPct(num) {
             const prefix = num > 0 ? '+' : (num < 0 ? '-' : '');
             return `${prefix}${Math.abs(num).toFixed(2)}%`;
+        }
+
+        // ==========================================
+        // GPF Official IRR / XIRR Calculation Engine
+        // ==========================================
+        function parseThaiDateToJsDate(dateStr) {
+            const info = parseDateInfo(dateStr);
+            const gregorianYear = info.year > 2400 ? info.year - 543 : info.year;
+            return new Date(gregorianYear, info.monthIdx, info.day);
+        }
+
+        function solveXIRR(cashFlows) {
+            if (!cashFlows || cashFlows.length < 2) return null;
+
+            let hasPos = false;
+            let hasNeg = false;
+            for (const cf of cashFlows) {
+                if (cf.amount > 0) hasPos = true;
+                if (cf.amount < 0) hasNeg = true;
+            }
+            if (!hasPos || !hasNeg) return null;
+
+            const t0 = cashFlows[0].date.getTime();
+
+            function npv(rate) {
+                let sum = 0;
+                for (const cf of cashFlows) {
+                    const days = (cf.date.getTime() - t0) / (1000 * 60 * 60 * 24);
+                    const years = days / 365.25;
+                    sum += cf.amount / Math.pow(1 + rate, years);
+                }
+                return sum;
+            }
+
+            function dnpv(rate) {
+                let sum = 0;
+                for (const cf of cashFlows) {
+                    const days = (cf.date.getTime() - t0) / (1000 * 60 * 60 * 24);
+                    const years = days / 365.25;
+                    sum -= (years * cf.amount) / Math.pow(1 + rate, years + 1);
+                }
+                return sum;
+            }
+
+            // Newton-Raphson iteration with initial guess
+            let rate = 0.06;
+            const maxIterations = 80;
+            const tolerance = 1e-6;
+
+            for (let i = 0; i < maxIterations; i++) {
+                const fValue = npv(rate);
+                const fDerivative = dnpv(rate);
+
+                if (Math.abs(fValue) < tolerance) return rate;
+                if (Math.abs(fDerivative) < 1e-9) break;
+
+                const newRate = rate - fValue / fDerivative;
+                if (newRate <= -0.99 || isNaN(newRate) || !isFinite(newRate)) break;
+                if (Math.abs(newRate - rate) < tolerance) return newRate;
+
+                rate = newRate;
+            }
+
+            // Robust Bisection Fallback
+            let low = -0.5;
+            let high = 2.0;
+            let fLow = npv(low);
+            let fHigh = npv(high);
+
+            if (fLow * fHigh > 0) {
+                high = 5.0;
+                fHigh = npv(high);
+            }
+
+            if (fLow * fHigh <= 0) {
+                for (let i = 0; i < 70; i++) {
+                    const mid = (low + high) / 2;
+                    const fMid = npv(mid);
+
+                    if (Math.abs(fMid) < tolerance || (high - low) / 2 < tolerance) {
+                        return mid;
+                    }
+
+                    if (fLow * fMid < 0) {
+                        high = mid;
+                        fHigh = fMid;
+                    } else {
+                        low = mid;
+                        fLow = fMid;
+                    }
+                }
+                return (low + high) / 2;
+            }
+
+            return rate;
+        }
+
+        function calculateGpfIrrMetrics(selectedIdx) {
+            if (!rawData || rawData.length === 0) {
+                return { irr5y: null, irrAll: null, evalDateStr: '-' };
+            }
+
+            const currentRec = rawData[selectedIdx];
+            const currentDate = parseThaiDateToJsDate(currentRec.dateStr);
+
+            // เงื่อนไข: คำนวณทุกวันเสาร์ของสัปดาห์ โดยคำนวณจากยอดเงิน 3 วันทำการก่อนวันคำนวณ
+            // 3 วันทำการก่อนวันเสาร์ = วันพุธ
+            const dayOfWeek = currentDate.getDay(); // 0: อา, 1: จ, ..., 6: ส
+            let satDate = new Date(currentDate);
+            if (dayOfWeek !== 6) {
+                satDate.setDate(satDate.getDate() + (6 - dayOfWeek));
+            }
+
+            let cutoffDate = new Date(satDate);
+            cutoffDate.setDate(cutoffDate.getDate() - 3); // ถอยหลัง 3 วันไปวันพุธ
+
+            let evalRec = currentRec;
+            let evalIdx = selectedIdx;
+
+            for (let i = selectedIdx; i >= 0; i--) {
+                const rDate = parseThaiDateToJsDate(rawData[i].dateStr);
+                if (rDate <= cutoffDate) {
+                    evalRec = rawData[i];
+                    evalIdx = i;
+                    break;
+                }
+            }
+
+            // 1. คำนวณ IRR ตั้งแต่เริ่มนำส่ง (All historical contributions)
+            const cashFlowsAll = [];
+            const firstRec = rawData[0];
+            const firstDate = parseThaiDateToJsDate(firstRec.dateStr);
+            const initialCapital = firstRec.principal > 0 ? firstRec.principal : firstRec.total;
+
+            cashFlowsAll.push({
+                date: firstDate,
+                amount: -Math.abs(initialCapital)
+            });
+
+            for (let i = 1; i <= evalIdx; i++) {
+                const prevP = rawData[i - 1].principal || 0;
+                const curP = rawData[i].principal || 0;
+                const deltaP = curP - prevP;
+
+                // เมื่อมีการนำส่งเงินเพิ่มเข้า กบข.
+                if (deltaP > 1) {
+                    cashFlowsAll.push({
+                        date: parseThaiDateToJsDate(rawData[i].dateStr),
+                        amount: -Math.abs(deltaP)
+                    });
+                }
+            }
+
+            // ยอดเงินประเมินปลายงวด (Terminal Value)
+            const evalDateObj = parseThaiDateToJsDate(evalRec.dateStr);
+            cashFlowsAll.push({
+                date: evalDateObj,
+                amount: evalRec.total
+            });
+
+            const irrAllRate = solveXIRR(cashFlowsAll);
+
+            // 2. คำนวณ IRR 5 ปีย้อนหลัง
+            const fiveYearsAgoDate = new Date(evalDateObj);
+            fiveYearsAgoDate.setFullYear(fiveYearsAgoDate.getFullYear() - 5);
+
+            let idx5y = -1;
+            for (let i = evalIdx; i >= 0; i--) {
+                const rDate = parseThaiDateToJsDate(rawData[i].dateStr);
+                if (rDate <= fiveYearsAgoDate) {
+                    idx5y = i;
+                    break;
+                }
+            }
+
+            let irr5yRate = null;
+            if (idx5y !== -1) {
+                const start5yRec = rawData[idx5y];
+                const cashFlows5y = [];
+
+                // มูลค่าพอร์ต ณ 5 ปีก่อน เป็นเงินลงทุนตั้งต้น
+                cashFlows5y.push({
+                    date: parseThaiDateToJsDate(start5yRec.dateStr),
+                    amount: -Math.abs(start5yRec.total)
+                });
+
+                for (let i = idx5y + 1; i <= evalIdx; i++) {
+                    const prevP = rawData[i - 1].principal || 0;
+                    const curP = rawData[i].principal || 0;
+                    const deltaP = curP - prevP;
+                    if (deltaP > 1) {
+                        cashFlows5y.push({
+                            date: parseThaiDateToJsDate(rawData[i].dateStr),
+                            amount: -Math.abs(deltaP)
+                        });
+                    }
+                }
+
+                cashFlows5y.push({
+                    date: evalDateObj,
+                    amount: evalRec.total
+                });
+
+                irr5yRate = solveXIRR(cashFlows5y);
+            } else {
+                irr5yRate = irrAllRate;
+            }
+
+            return {
+                irr5y: irr5yRate !== null ? irr5yRate * 100 : null,
+                irrAll: irrAllRate !== null ? irrAllRate * 100 : null,
+                evalDateStr: evalRec.dateStr
+            };
+        }
+
+        function renderIrrMetrics(irrResults) {
+            const irr5yEl = document.getElementById('irr-5y-val');
+            const irrAllEl = document.getElementById('irr-all-val');
+            const irrNoteEl = document.getElementById('irr-calc-date-note');
+
+            if (irr5yEl) {
+                if (irrResults.irr5y !== null) {
+                    const prefix = irrResults.irr5y >= 0 ? '+' : '';
+                    const formatted = `${prefix}${irrResults.irr5y.toFixed(2)}%`;
+                    rollSlotNumber(irr5yEl, formatted);
+                } else {
+                    irr5yEl.innerText = '-';
+                }
+            }
+
+            if (irrAllEl) {
+                if (irrResults.irrAll !== null) {
+                    const prefix = irrResults.irrAll >= 0 ? '+' : '';
+                    const formatted = `${prefix}${irrResults.irrAll.toFixed(2)}%`;
+                    rollSlotNumber(irrAllEl, formatted);
+                } else {
+                    irrAllEl.innerText = '-';
+                }
+            }
+
+            if (irrNoteEl && irrResults.evalDateStr) {
+                irrNoteEl.innerText = `อ้างอิงยอดเงิน กบข. ณ วันที่ ${irrResults.evalDateStr}`;
+            }
+        }
+
+        function openIrrInfoModal() {
+            const modal = document.getElementById('irr-info-modal');
+            const content = document.getElementById('irr-info-modal-content');
+            if (modal && content) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                modal.classList.add('opacity-100');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }
+        }
+
+        function closeIrrInfoModal() {
+            const modal = document.getElementById('irr-info-modal');
+            const content = document.getElementById('irr-info-modal-content');
+            if (modal && content) {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+            }
         }
 
         function initChart() {
@@ -2094,13 +2435,17 @@
                 const pctClass = isPositive ? 'text-emerald-600 dark:text-emerald-400' : (isNegative ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400');
 
                 return `
-                    <div class="flex items-center justify-between py-3 px-2 hover:bg-slate-100/70 dark:hover:bg-white/[0.02] transition-colors rounded-xl text-xs sm:text-sm">
+                    <div class="flex items-center justify-between py-2.5 sm:py-3 px-2 hover:bg-slate-100/70 dark:hover:bg-white/[0.02] transition-colors rounded-xl text-xs sm:text-sm">
                         <div class="w-[45%] font-medium text-slate-700 dark:text-slate-200 truncate flex items-center space-x-1.5">
                             <span class="w-1.5 h-1.5 rounded-full ${isPositive ? 'bg-emerald-500 dark:bg-emerald-400' : (isNegative ? 'bg-rose-500' : 'bg-slate-400')}"></span>
-                            <span>${item.label}</span>
+                            <span class="truncate">${item.label}</span>
                         </div>
-                        <div class="w-[28%] font-bold text-right font-num ${profitClass}">${formattedProfit}</div>
-                        <div class="w-[27%] font-bold text-right font-num ${pctClass}">${formattedPct}</div>
+                        <div class="w-[28%] font-bold text-right font-num ${profitClass} truncate">
+                            ${formattedProfit}
+                        </div>
+                        <div class="w-[27%] font-bold text-right font-num ${pctClass} truncate">
+                            ${formattedPct}
+                        </div>
                     </div>
                 `;
             }).join('');
