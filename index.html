@@ -2654,8 +2654,12 @@
             const firstRec = planRecords[0];
             const lastRec = planRecords[planRecords.length - 1];
 
+            const startD = parseDateInfo(firstRec.dateStr);
+            const endD = parseDateInfo(lastRec.dateStr);
+            const shortDateRange = `${startD.day} ${startD.monthShort} ${startD.year} - ${endD.day} ${endD.monthShort} ${endD.year}`;
+
             document.getElementById('plan-summary-modal-subtitle').innerText = planName;
-            document.getElementById('plan-modal-date-range').innerText = `${firstRec.dateStr} - ${lastRec.dateStr}`;
+            document.getElementById('plan-modal-date-range').innerText = shortDateRange;
 
             // Calculate profit accumulated within this plan period
             let totalPlanProfit = 0;
@@ -2691,7 +2695,7 @@
 
             // Gaming slot machine rolling animation for Plan summary modal numbers
             const finalParts = formatMoneyParts(lastRec.total);
-            const formattedProfitVal = `${profitSign}฿${formatNumber(Math.abs(totalPlanProfit))}`;
+            const formattedProfitVal = `${profitSign}${formatNumber(Math.abs(totalPlanProfit))}`;
             const formattedProfitPct = `(${profitSign}${Math.abs(planPct).toFixed(2)}%)`;
 
             setTimeout(() => {
@@ -2704,10 +2708,7 @@
             }, 60);
 
             // Duration and active state banner with unified font styling
-            const startD = parseDateInfo(firstRec.dateStr);
-            const endD = parseDateInfo(lastRec.dateStr);
-            const durationText = `${startD.day} ${startD.monthShort} ${startD.year} - ${endD.day} ${endD.monthShort} ${endD.year}`;
-            document.getElementById('plan-modal-duration-text').innerText = durationText;
+            document.getElementById('plan-modal-duration-text').innerText = shortDateRange;
 
             const isLatestPlan = (lastRec.rawIndex === rawData.length - 1);
             const statusBadge = document.getElementById('plan-modal-status-badge');
